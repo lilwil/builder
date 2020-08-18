@@ -1,0 +1,126 @@
+<div class="bjui-pageHeader">
+    <form id="pagerForm" data-toggle="ajaxsearch" action="{$searchPostUrl}" method="post">
+        <input type="hidden" name="pageSize" value="${model.pageSize}">
+        <input type="hidden" name="pageCurrent" value="${model.pageCurrent}">
+        <input type="hidden" name="orderField" value="${param.orderField}">
+        <input type="hidden" name="orderDirection" value="${param.orderDirection}">
+        {volist name='hidden' id='vo'}
+        <input type="hidden" name="{$vo.name}" value="{$vo.value}">
+        {/volist}
+        <div class="bjui-searchBar">
+            {present name='searches'}
+            <!-- search start -->
+            <!-- 普通搜索部分start -->
+            {volist name="searches" id="search"}
+            {include file="$search_path"/}
+            {/volist}
+            <!-- 普通搜索部分end -->
+            {present name='search_more'}
+            <!-- showMoreSearch tag -->
+            &nbsp;高级查询<button type="button" class="showMoreSearch" data-toggle="moresearch" data-name="custom"><i class="fa fa-angle-double-down"></i></button>
+            {/present}
+            <button type="submit"  class="btn-default" data-icon="search">查询</button>
+            <a class="btn btn-orange" href="javascript:;" data-toggle="reloadsearch" data-clear-query="true" data-icon="undo">清空</a>
+            <!-- search end -->
+            {/present}
+            {present name='form_info'}
+            //TODO:改进提示信息为数组形式
+            {/present}
+            {notempty name='suggest'}
+            &nbsp; <div class="alert alert-info form-inline"><i class="fa fa-volume-up"></i> <strong>{:\\think\\facade\\Lang::get('_info_suggest_')}</strong>（{$suggest}）</div>
+            {/notempty}
+            {notempty name='warning'}
+            &nbsp; <div class="alert alert-warning form-inline"><i class="fa fa-warning"></i> <strong>{:\\think\\facade\\Lang::get('_info_warning_')}</strong>（{$warning}）</div>
+            {/notempty}
+            <div class="pull-right">
+                {volist name="buttonList" id="button"}
+                <{$button.tag} {$button.attr|raw}>{$button.title}</{$button.tag}>&nbsp;
+            {/volist}
+            {php}if(isset($group)&&count($group)>0){{/php}
+            <div class="btn-group">
+                <button type="button" class="btn-default dropdown-toggle" data-toggle="dropdown" data-icon="copy">批量操作<span class="caret"></span></button>
+                <ul class="dropdown-menu right" role="menu">
+                    {volist name='group' id='vo'}
+                    {neq  name='vo.br' value='1'}
+                    <li><a href="{:url($vo['url'])}" data-toggle="{$vo.toggle}" data-idname="{$vo.idname}" data-group="{$vo.group}" data-confirm-msg="{$vo.msg}">{$vo.title}</a></li>
+                    {else/}
+                    <li class="{$vo.class}"></li>
+                    {/neq}
+                    {/volist}
+                </ul>
+            </div>
+            {php}}{/php}
+        </div>
+        <!--  bjui-moreSearch start-->
+        {present name='search_more'}
+        <div class="bjui-moreSearch">
+            {volist name="search_more" id="search"}
+            {include file="$search_path"/}
+            {/volist}
+        </div>
+        {/present}
+        <!--  bjui-moreSearch end-->
+</div>
+</form>
+</div>
+<!-- 数据表格 -->
+<div class="bjui-pageContent tableContent">
+    <table class="table table-bordered table-hover table-striped table-top table-condensed ">
+        <!-- 表头 -->
+        <thead>
+        <tr>
+            <th width="26"><input type="checkbox" class="checkboxCtrl" data-group="ids" data-toggle="icheck"></th>
+            {volist name="keyList" id="field"}
+            <th{notempty name='field.width'} width="{$field.width}" {/notempty} {notempty name='field.sort'} data-order-field="{$field.name}"{php}
+            if($field['sort']!==true){
+            if('asc'===$field['sort']){
+            echo 'data-order-direction="asc" ';
+            }elseif('desc'===$field['sort']){
+            echo 'data-order-direction="desc"';
+            }
+            }
+            {/php}{/notempty} >{$field.title|htmlspecialchars}</th>
+            {/volist}
+        </tr>
+        </thead>
+        <!-- 表头  end-->
+        <!-- 列表 -->
+        <tbody>
+        {empty name='list'}
+        <tr data-id="0" align="center">
+            <td colspan="{php}echo count($keyList)+1;{/php}" >{:lang('_oh_nothing_')}</td>
+        </tr>
+        {else/}
+        {volist name="list" id="e"}
+        <tr data-id="{php}echo $e[$pk];{/php}" class="{$e['_row_style']}">
+            <td><input type="checkbox" name="ids" data-toggle="icheck" value="{php}echo $e[$pk];{/php}"></td>
+            {volist name="keyList" id="field"}
+            <td>{$e[$field['name']]|raw}</td>
+            {/volist}
+        </tr>
+        {/volist}
+        {/empty}
+        <!-- 列表 end -->
+        </tbody>
+    </table>
+</div>
+<!-- 数据表格 end -->
+{present name='has_page' }
+<div class="bjui-pageFooter">
+    <div class="pages">
+        <span>每页</span>
+        <div class="selectPagesize">
+            <select data-toggle="selectpicker" data-toggle-change="changepagesize">
+                <option value="15">15</option>
+                <option value="20">20</option>
+                <option value="25">25</option>
+                <option value="30">30</option>
+            </select>
+        </div>
+        <span>条，共 {$totalCount} 条</span>
+        <button type="button" class="btn-default btn-refresh btn" style="display: none" title="刷新" data-icon="refresh"><i class="fa fa-refresh"></i> </button>
+    </div>
+    <div class="pagination-box" data-toggle="pagination" data-total="{$totalCount}" data-page-size="{:\\think\\facade\\Config::get('paginate.list_rows')}" data-page-current="{$currentPage}">
+    </div>
+</div>
+{/present}
