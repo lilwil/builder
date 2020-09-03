@@ -359,6 +359,10 @@
          */
         public function button($title, $attr)
         {
+            if (isset($attr['url']) && strpos($attr['url'],'/Admin'))
+            {
+                $attr['url'] = str_replace('/Admin','/admin',$attr['url']);
+            }
             $this->_buttonList[] = [
                 'title' => $title,
                 'attr' => $attr,
@@ -1907,6 +1911,10 @@ EOF;
                     if (empty($this->_searchPostUrl))
                     {
                         $this->_searchPostUrl = $this->request->url();
+                    }
+                    if (strpos($this->_searchPostUrl,'/Admin'))
+                    {
+                        $this->_searchPostUrl = str_replace('/Admin','/admin',$this->_searchPostUrl);
                     }
                     $this->assign('searchPostUrl', $this->_searchPostUrl);
                     /* 复选框 */
