@@ -1414,7 +1414,17 @@
             if (count($this->_explaints) > 0) {
                 $this->assign('explaints', $this->_explaints);
             }
-            $this->assign('savePostUrl', $this->_savePostUrl ?: Url::build());
+            if (!$this->_savePostUrl )
+            {
+                $this->_savePostUrl  =  Url::build();
+            };
+
+            if (strpos($this->_savePostUrl,'/Admin'))
+            {
+                $this->_savePostUrl = str_replace('/Admin','/admin',$this->_savePostUrl);
+            }
+
+            $this->assign('savePostUrl', $this->_savePostUrl );
             $this->assign('triggers', $this->_triggers);
             //            dump($this->_triggers);
             $this->assign('reload', $this->_reload);
