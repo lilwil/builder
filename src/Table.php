@@ -343,8 +343,8 @@
          */
         public function setSearchPostUrl($url, $param = [])
         {
-            $m = ['m'=>$this->request->param('m')];
-            $param = empty($param)?$m:array_merge($param,$m);
+            $m = ['m' => $this->request->param('m')];
+            $param = empty($param) ? $m : array_merge($param, $m);
             $this->_searchPostUrl = Url::build($url, $param);
             return $this;
         }
@@ -359,9 +359,8 @@
          */
         public function button($title, $attr)
         {
-            if (isset($attr['url']) && strpos($attr['url'],'/Admin'))
-            {
-                $attr['url'] = str_replace('/Admin','/admin',$attr['url']);
+            if (isset($attr['url']) && strpos($attr['url'], '/Admin')) {
+                $attr['url'] = str_replace('/Admin', '/admin', $attr['url']);
             }
             $this->_buttonList[] = [
                 'title' => $title,
@@ -1238,13 +1237,22 @@ EOF;
 
         public function keyUser($field, $title, $sort = false, $width = '', $style = '')
         {
-            $temp = explode('_', $field);
-            $this->_with[$temp[0]] = ['id', 'avatar', 'nickname'];
+            if (strpos($field, '|')) {
+                $temp = explode('|', $field);
+                $with_field = $temp[0];
+                $field = $temp[1];
+            } else {
+                $temp = explode('_', $field);
+                unset($temp[count($temp) - 1]);
+
+                $with_field = explode('_',$temp);
+            }
+            $this->_with[$with_field] = ['id', 'avatar', 'nickname'];
             $templet_name = uniqid();
             $common = config('template.tpl_replace_string.__COMMON__') . '/images/avatar_default.png';
             $this->_templets[] = <<<EOF
 <script type="text/html" id="$templet_name">
- <img style="display: inline-block; width: 25px; height: 25px;border-radius: 50%;" src= {{ d.{$temp[0]}?d.{$temp[0]}.avatar:'{$common}' }}>  {{ d.{$temp[0]}?d.{$temp[0]}.nickname:'无用户' }}
+ <img style="display: inline-block; width: 25px; height: 25px;border-radius: 50%;" src= {{ d.{$with_field}?d.{$with_field}.avatar:'{$common}' }}>  {{ d.{$with_field}?d.{$with_field}.nickname:'无用户' }}
 </script>
 EOF;
             return $this->key($field, $title, $sort, 150, 'normal', $style, '#' . $templet_name);
@@ -1330,11 +1338,10 @@ EOF;
         public function keyDoAction($url, $title = '操作', $attr = [], $status = [], $event = 'edit')
         {
             if (false === strpos($url, '/')) {
-                if (false !== strpos($this->request->controller(), 'Admin.'))
-                {
+                if (false !== strpos($this->request->controller(), 'Admin.')) {
                     // 补充
-                    $url = $this->request->module() . '/' .lcfirst( $this->request->controller() ). '/' . $url;
-                }else {
+                    $url = $this->request->module() . '/' . lcfirst($this->request->controller()) . '/' . $url;
+                } else {
                     // 补充
                     $url = $this->request->module() . '/' . $this->request->controller() . '/' . $url;
                 }
@@ -1853,7 +1860,7 @@ EOF;
                         ];
                         !empty($this->_left_leader) && array_unshift($this->_keyList, $this->_left_leader);
                     }
-                    $get = $this->request->except('v,m,status','get');
+                    $get = $this->request->except('v,m,status', 'get');
                     if (!empty($get)) {
                         $action = $this->request->action() . '?' . http_build_query($get);
                     } else {
@@ -1908,13 +1915,11 @@ EOF;
                             $this->assign('search_more', $this->_search_more);
                         }
                     }
-                    if (empty($this->_searchPostUrl))
-                    {
+                    if (empty($this->_searchPostUrl)) {
                         $this->_searchPostUrl = $this->request->url();
                     }
-                    if (strpos($this->_searchPostUrl,'/Admin'))
-                    {
-                        $this->_searchPostUrl = str_replace('/Admin','/admin',$this->_searchPostUrl);
+                    if (strpos($this->_searchPostUrl, '/Admin')) {
+                        $this->_searchPostUrl = str_replace('/Admin', '/admin', $this->_searchPostUrl);
                     }
                     $this->assign('searchPostUrl', $this->_searchPostUrl);
                     /* 复选框 */
