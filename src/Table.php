@@ -1214,19 +1214,29 @@ EOF;
             if (strpos($field, '|')) {
                 $temp = explode('|', $field);
                 $field = $temp[1];
-            } else {
+            } elseif(strpos($field, '_')) {
                 $temp = explode('_', $field);
-            }
-            $this->_with[$temp[0]] = ['id', 'url'];
-            $templet_name = uniqid();
-            $with_field = $temp[0];
-            $common = config('template.tpl_replace_string.__COMMON__') . '/images/default_image.gif';
-            $this->_templets[] = <<<EOF
+                $this->_with[$temp[0]] = ['id', 'url'];
+                $with_field = $temp[0];
+                $templet_name = uniqid();
+                $common = config('template.tpl_replace_string.__COMMON__') . '/images/default_image.gif';
+                $this->_templets[] = <<<EOF
 <script type="text/html" id="$templet_name">
 <div class="layer-photos" id="layer-photos-{{d.id}}-$with_field-{{d.$with_field?d.$with_field.id:d.id}}"><img style="display: inline-block; width: 30px;cursor:pointer" title="点击查看大图"
  layer-src=" {{ d.{$temp[0]}?d.{$temp[0]}.url:'{$common}' }}" src=" {{ d.{$temp[0]}?d.{$temp[0]}.url:'{$common}' }}"></div>
 </script>
 EOF;
+            }else{
+
+                $templet_name = uniqid();
+                $common = config('template.tpl_replace_string.__COMMON__') . '/images/default_image.gif';
+                $this->_templets[] = <<<EOF
+<script type="text/html" id="$templet_name">
+<div class="layer-photos" id="layer-photos-{{d.id}}"><img style="display: inline-block; width: 30px;cursor:pointer" title="点击查看大图"
+ layer-src=" {{ d.{$field}?d.{$field}:'{$common}' }}" src=" {{ d.{$field}?d.{$field}:'{$common}' }}"></div>
+</script>
+EOF;
+            }
             //            $this->_templets[] = <<<EOF
             //<script type="text/html" id="$templet_name">
             // <img style="display: inline-block; width: 25px; height: 25px;" src= {{ d.{$temp}?d.{$field}:'{$common}/images/default_image.gif' }}>
@@ -1244,8 +1254,7 @@ EOF;
             } else {
                 $temp = explode('_', $field);
                 unset($temp[count($temp) - 1]);
-
-                $with_field = explode('_',$temp);
+                $with_field = implode('_',$temp);
             }
             $this->_with[$with_field] = ['id', 'avatar', 'nickname'];
             $templet_name = uniqid();
