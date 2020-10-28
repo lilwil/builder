@@ -452,6 +452,57 @@
                     }
                 });
 
+            }else if(obj.event === 'dialog'){
+
+                var url = $(this).data('url');
+                url = url.replace('{literal}{$auto_builder}{/literal}','{$namespace}');
+                for(var key in obj.data){
+                    url = url.replace('{$'+key+'}',obj.data[key]);
+                }
+
+                admin.popup({
+                    title: $(this).data('title')
+                    ,area: [$(this).data('width')+'px', $(this).data('height')+'px']
+                    ,id: 'LAY-popup-workorder-add'
+                    ,success: function(layero, index){
+                        view(this.id).render(url).done(function(){
+                            form.render(null, 'layuiadmin-form-workorder');
+                            //监听提交
+                            form.on('submit({$namespace})', function(data){
+                                var field = data.field; //获取提交的字段
+                                //提交 Ajax 成功后，关闭当前弹层并重载表格
+                                $.ajax({
+                                    url:url, //请求的url地址
+                                    dataType:"json", //返回格式为json
+                                    async:true,//请求是否异步，默认为异步，这也是ajax重要特性
+                                    type:"POST", //请求方式
+                                    data:field,
+                                    success:function(req){
+                                        //请求成功时处理
+                                        if ( 0 == req.code)
+                                        {
+                                            layer.msg(req.message);
+                                            layui.table.reload('{$namespace}-table'); //重载表格
+                                            layer.close(index); //执行关闭
+                                        }else{
+                                            layer.msg(req.message);
+                                        }
+                                    },
+                                    complete:function(){
+                                        //请求完成的处理
+                                    },
+                                    error:function(err){
+                                        //请求出错处理
+                                        layer.msg(JSON.stringify(err));
+                                    }
+                                });
+
+                                //$.ajax({});
+                            });
+                        });
+                    }
+                });
+
             } else if(obj.event === 'ajax'){
 
                 var url = $(this).data('url');

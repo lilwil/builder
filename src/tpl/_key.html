@@ -1281,6 +1281,36 @@ $checked = $field['value']==$key ? 'checked' : '';
 </div>{/case}
 
 {case value="image"}
+
+{php}
+$images = [];
+    if(is_numeric($field['value']) && $field['value']>0){
+        $picture = \app\file\model\Picture::find($field['value']);
+        if($picture){
+        $field['value'] = $picture['id'];
+        $field['url'] = $picture['url'];
+        }else{
+        $field['value'] = '';
+        $field['url'] = '/static/common/images/default_image_240.gif';
+        }
+    }elseif(is_object($field['value'])){
+        $picture = $field['value'];
+        $field['value'] = $picture['id'];
+        $field['url'] = $picture['url'];
+
+    }else{
+        if($field['value'])
+        {
+        $field['url'] = $field['value'];
+        }else{
+        $field['value'] = '';
+        $field['url'] = '/static/common/images/default_image_240.gif';
+        }
+
+    }
+
+{/php}
+
 <div class="layui-input-inline">
     <style>
         .layui-upload-img {
@@ -1291,7 +1321,7 @@ $checked = $field['value']==$key ? 'checked' : '';
     </style>
     <button type="button" class="layui-btn" id="button-upload-normal-image-{$field.field}">上传图片</button>
     <div class="layui-upload-list">
-        <img class="layui-upload-img" id="upload-normal-image-{$field.field}" src="{$field['value']|picture_get_url}">
+        <img class="layui-upload-img" id="upload-normal-image-{$field.field}" src="{$field['url']}">
         <input type="hidden" name="{$field.field}" value="{$field['value']}"/>
         <p id="test-upload-demoText"></p>
     </div>

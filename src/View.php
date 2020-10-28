@@ -9,7 +9,8 @@
     namespace yicmf\builder;
 
     use app\admin\model\Menu as MenuModel;
-    use think\Loader;
+	use Overtrue\Pinyin\Pinyin;
+	use think\Loader;
 
     class View extends Builder
     {
@@ -116,9 +117,10 @@
          * @author  : 微尘 <yicmf@qq.com>
          * @datetime: 2019/2/22 11:37
          */
-        public function keyClosure($name, $title, $closure, $subtitle = '', $opt = [])
+        public function keyClosure( $title, $closure, $subtitle = '', $opt = [])
         {
-            return $this->key($name, text($title), $subtitle, $closure, $opt);
+			$pinyin = new Pinyin();
+			return $this->key($pinyin->permalink($title, '_'),  text($title), $subtitle, $closure, $opt);
         }
 
         public function keyLabel($name, $title, $subtitle = null)
