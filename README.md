@@ -1,2 +1,2 @@
 # builder
-自用token
+自用
