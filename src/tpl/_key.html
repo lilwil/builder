@@ -19,15 +19,7 @@
         {/notempty}
     </div>
     {/case}
-    {case value="rmb"}
-    <div class="layui-input-inline">
-        <input type="text" name="{$field.field}" value="{$field.value|htmlspecialchars}" class="layui-input"
-               lay-verify="{$field.verify}" placeholder="{$field.placeholder|raw}"/>
-    </div>
-    {notempty name='field.tips'}
-    <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
-    {/notempty}
-    {/case}
+
     {case value="icp"}
     <div class="layui-input-inline">
         <input type="text" name="{$field.field}" value="{$field.value|htmlspecialchars}" class="layui-input"
@@ -46,17 +38,7 @@
     <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
     {/notempty}
     {/case}
-    {case value="headline"}
-    <div class="layui-input-inline">
-        <input type="text" size="{$field['size']}" name="{$field.field}" value="{$field.value|htmlspecialchars}"
-               style="color:{$field['options']['color']}">
-        &nbsp;显示颜色： <input type="text" name="color" id="yicmf_builder_color" value="{$field['options']['color']}"
-                           style="background-color:{$field['options']['color']} " data-toggle="colorpicker"
-                           data-bgcolor="true" size="9" readonly>
-        <a href="javascript:;" title="清除" data-toggle="clearcolor" data-target="#yicmf_builder_color">清除</a>
 
-    </div>
-    {/case}
     {case value="color"}
     <div class="layui-input-inline">
 
@@ -120,7 +102,7 @@
     <div class="layui-input-inline">
         <span id="{$field.field}_info">{$field['value']['field']|default="暂无选择"}</span>
 
-        <input type="hidden" id="{$field.field}" name="{$field.field}" value="{$field['value']|json_encode}">
+        <input type="hidden" id="{$field.field}" name="{$field.field}" value="{$field['value']|json_encode|raw}">
         <button type="button" class="btn-default"
                 data-toggle="dialog"
                 data-options="{id:'amap_{$field.field}_dialog', url:'{:addon_url('Amap://Amap/index')}', title:'地图选点',max:true,width:1100,height:800,mask:true}">
@@ -283,10 +265,40 @@
         {notempty name='field.tips'}
         <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
         {/notempty}
-
-
     </div>
 
+    {/case}
+    {case value="slider"}
+    <div class="layui-input-inline" style="width:{$field.size} px">
+        <div id="slideTest3" class="demo-slider"></div>
+    </div>
+    {notempty name='field.tips'}
+    <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
+    {/notempty}
+    <script>
+        layui.use('slider', function(){
+            var $ = layui.$
+                ,slider = layui.slider;
+            //默认滑块
+
+            //设置最大最小值
+            slider.render({
+                elem: '#slideTest3'
+                ,min: 20 //最小值
+                ,max: 50 //最大值
+                ,tips: true //关闭默认提示层
+                // ,disabled: true //禁用滑块
+                // ,value: [30, 60] //初始值
+                ,value: 40 //初始值
+                // ,range: true //范围选择
+                ,change: function(value){
+                    $('#test-slider-tips1').html('当前数值：'+ value);
+                    // $('#test-slider-tips2').html('开始值：'+ vals[0] + '、结尾值：'+ vals[1]);
+                }
+            });
+
+        });
+    </script>
 
     {/case}
     {case value="belongTo"}<!-- 属于选择 -->
@@ -375,7 +387,7 @@
                     el: '#demo1',
                     size: 'large',
                     name: "{$field.field}",
-                    data: {$fields|json_encode}
+                    data: {$fields|json_encode|raw}
                 })
                 /*var demo1 = xmSelect.render({
                     el: '#demo1',
@@ -583,49 +595,6 @@
 
 </div>{/case}
 
-{case value="checkbox_link_check"}
-<div class="layui-input-inline">
-    {php}
-    //dump($field);
-    {/php}
-    <div id='key_show_{$field[' field
-    ']}'>
-</div>
-<script type="text/javascript">
-
-    function getOptions({$field['field']}, {$field['options']['field']}) {
-        $.ajax({
-            type: "POST",
-            url: "{:\\think\\facade\\Url::build($field['options']['ajax_url'])}",
-            data: "{$field['options']['field']}=" + {$field['options']['field']} + "&{$field['field']}=" + {$field['field']},
-            //返回数据的格式
-            datatype: "json",
-            //成功返回之后调用的函数
-            success: function (data) {
-                // TODO:需要调整
-                $('#key_show_{$field['
-                field
-                ']}'
-            ).
-                html(data);
-            },
-            //调用出错执行的函数
-            error: function () {
-                //请求出错处理
-                $(this).alertmsg('error', '请求异常');
-            }
-        });
-    }
-
-    getOptions({$field['value'] ? : 0}, $("#key_{$field['options']['field']}").val());
-
-    $("#key_{$field['options']['field']}").change(function () {
-        getOptions({$field['value'] ? : 0}, $("#key_{$field['options']['field']}").val());
-    });
-
-</script>
-
-</div>{/case}
 
 {case value="ueditor"}
 
@@ -832,9 +801,8 @@ $field['value_a'] = implode(' - ',$field['value']);
         {php}
         if (is_array($field['field'])) {
             {/php}
-                var options = {$field.options | json_encode};
+                var options = {$field.options|json_encode|raw};
                 options['done'] = function (value, date) {
-
                     var arr = value.split(" - ")
                     console.log(arr);
                     $("#j_builder_{$field.field[0]}").val(arr[0]);
@@ -845,7 +813,7 @@ $field['value_a'] = implode(' - ',$field['value']);
                 {php}
             }else{
                 {/php}
-                    laydate.render({$field.options | json_encode});
+                    laydate.render({$field.options|json_encode|raw});
 
                     {php}
                 }
@@ -990,25 +958,10 @@ $checked = $field['value']==$key ? 'checked' : '';
 
 {/case}
 
-{case value="images"}
-<div class="layui-input-inline">
+{case value="MultipleImage"}
+<div class="layui-input-block">
     {php}
-    $images = [];
-    if(is_numeric($field['value']) && $field['value']>0){
-    $images[] = \app\file\model\Picture::find($field['value']);
-    }elseif(is_object($field['value'])){
-    $images[] = $field['value'];
-    }elseif(is_array($field['value'])){
-    $images = $field['value'];
-    }else{
-    $images = [];
-    }
-    if($field['options']['limit'] <= count($images))
-    {
-    $replace = 1;
-    }else{
-    $replace = 0;
-    }
+    $images = \app\file\model\Picture::where('id','in',$field['value'])->select();
     {/php}
     <style>
         .layui-upload-img {
@@ -1017,82 +970,96 @@ $checked = $field['value']==$key ? 'checked' : '';
             margin: 0 10px 10px 0;
         }
     </style>
-    <button type="button" class="layui-btn" id="test-upload-normal">上传图片</button>
+    <button type="button" class="layui-btn" id="button-upload-MultipleImage-{$field.field}">上传图片</button>
     <div class="layui-upload-list">
-        <img class="layui-upload-img" id="test-upload-normal-img" src="/static/common/images/default_image_240.gif">
-        <input type="hidden">
-        <p id="test-upload-demoText"></p>
+        <input type="hidden" name="{$field.field}" id="file_value_{$field.field}" value="{$field['value']}"/>
+        <img class="layui-upload-img" style="display: none" id="test-upload-normal-img" src="/static/common/images/default_image_240.gif">
+            <div class="layui-upload-list" id="upload-MultipleImage-list-{$field.field}">
+                {volist name='images' id='vo'}
+                <div style="    display: inline-block;">
+                    <i class="layui-icon layui-icon-face-smile" style="font-size: 30px; color: #1E9FFF;display: none"></i>
+                    <img class="layui-upload-img"  data-id="{$vo.id}" src="{$vo['url']}">
+                </div>
+                {/volist}
+            </div>
+
     </div>
     <script>
         layui.use(['admin', 'upload'], function () {
             var $ = layui.jquery
                 , upload = layui.upload;
-
+            var limit = "{$field.options.limit}";
             //普通图片上传
             var uploadInst = upload.render({
-                elem: '#test-upload-normal'
-                //  ,accept: 'file' //普通文件
+                elem: '#button-upload-MultipleImage-{$field.field}'
+                ,accept: 'images' //图片
+               ,acceptMime: 'image/*'
                 //  ,exts: 'zip|rar|7z' //只允许上传压缩文件
                 //   ,size: 60 //限制文件大小，单位 KB
                 , url: "{:\\think\\facade\\Url::build('file/Picture/upload')}"
+                , multiple: true
                 , before: function (obj) {
+
                     //预读本地文件示例，不支持ie8
                     obj.preview(function (index, file, result) {
-                        $('#test-upload-normal-img').attr('src', result); //图片链接（base64）
+                      //  console.log(result);
+                        $('#upload-MultipleImage-list-{$field.field}').append('<img  data-index="index-'+index+'" src="' + result + '" alt="' + file.name + '" class="layui-upload-img">')
                     });
                 }
-                , done: function (res) {
+                ,progress: function(n, elem,e){
+
+                   // console.log(elem);
+                  //  console.log(e);
+                    var percent = n + '%' //获取进度百分比
+                   // element.progress('demo', percent); //可配合 layui 进度条元素使用
+                  //  console.log(percent);
+                    //以下系 layui 2.5.6 新增
+                 //   console.log(elem); //得到当前触发的元素 DOM 对象。可通过该元素定义的属性值匹配到对应的进度条。
+                }
+                , done: function (res, index, upload) {
                     //如果上传失败
+
+
+                  //  console.log(index)
+                    console.log($("[data-index=\'index-"+index+"\']"));
+                   // console.log(upload)
+                  //  alert(limit>0)
+                    if(limit>0 && $("#upload-MultipleImage-list-{$field.field}").children("img").length>limit)
+                    {
+                        $("#upload-MultipleImage-list-{$field.field}").children("img").eq(0).remove();
+                    }
                     if (res.code > 0) {
                         return layer.msg(res.message);
                     } else {
                         //上传成功
+                        $("[data-index=\'index-"+index+"\']").attr('data-id',res.data.id);
                     }
+                }
+                ,allDone: function(obj){ //当文件全部被提交后，才触发
+                   // console.log(obj); //得到总文件数file_value_{$field.field}
+
+                    var arr = new Array();
+                    console.log(obj)
+                    $("#upload-MultipleImage-list-{$field.field}").children("img").each(function(){
+                       if ($(this).data('id'))
+                       {
+                           arr.push($(this).data('id'));
+                       }
+                    });
+
+                    $("#file_value_{$field.field}").val(arr.join(','));
                 }
                 , error: function () {
                     //演示失败状态，并实现重传
-                    var demoText = $('#test-upload-demoText');
+                /*    var demoText = $('#test-upload-demoText');
                     demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-mini demo-reload">重试</a>');
                     demoText.find('.demo-reload').on('click', function () {
                         uploadInst.upload();
-                    });
+                    });*/
                 }
             });
-
-            //多图片上传
-            upload.render({
-                elem: '#test-upload-more'
-                , url: '{:\\think\\facade\\Url::build(\'file/Picture/upload\')}'
-                , multiple: true
-                , before: function (obj) {
-                    //预读本地文件示例，不支持ie8
-                    obj.preview(function (index, file, result) {
-                        $('#test-upload-more-list').append('<img src="' + result + '" alt="' + file.field + '" class="layui-upload-img">')
-                    });
-                }
-                , done: function (res) {
-                    //上传完毕
-                }
-            });
-
-
         });
     </script>
-
-    <!-- <div class="col-md-5">
-        <div class="thumbnail">
-            <input type="hidden" id='singel_image_{$field.field}' name="{$field.field}" value="">
-            <img id='singel_image_{$field.field}_img' data-src="holder.js/300x300"alt="..."
-                 src="{$single_image|default=\\think\\facade\\Config::get('default.image_240')}">
-            <div class="caption">
-                <p>
-                    <a href="{:\\think\\facade\\Url::build('admin/Picture/upload',['file_limit'=>1,'callback'=>'singel_image_'.$field['field']])}"
-                        class="btn btn-primary" role="button"data-toggle="dialog" data-mask = 'true' data-width = '1200' data-height = '800'
-                        data-id="singel_image_{$field.field}_dialog">{$field['value']? '替换图片': '上传图片'}</a>
-                </p>
-            </div>
-        </div>
-    </div> -->
 
 
 </div>{/case}
@@ -1283,6 +1250,7 @@ $checked = $field['value']==$key ? 'checked' : '';
 {case value="image"}
 
 {php}
+
 $images = [];
     if(is_numeric($field['value']) && $field['value']>0){
         $picture = \app\file\model\Picture::find($field['value']);
@@ -1333,6 +1301,7 @@ $images = [];
             //普通图片上传
             var uploadInst = upload.render({
                 elem: '#button-upload-normal-image-{$field.field}'
+                ,multiple: {$field['options']['limit'] == 1?0:1}
                 //  ,accept: 'file' //普通文件
                 //  ,exts: 'zip|rar|7z' //只允许上传压缩文件
                 //   ,size: 60 //限制文件大小，单位 KB
