@@ -2,7 +2,7 @@
 	// +----------------------------------------------------------------------
 	// | builder
 	// +----------------------------------------------------------------------
-	// | Copyright (c) 2015-2019 http://www.yicmf.com, All rights reserved.
+	// | Copyright (c) 2015-2022 http://www.yicmf.com, All rights reserved.
 	// +----------------------------------------------------------------------
 	// | Author: 微尘 <yicmf@qq.com>
 	// +----------------------------------------------------------------------
@@ -134,7 +134,7 @@
 			return $this->key($name, $title, $tips, 'html', $html);
 		}
 
-	 
+
 		/**
 		 * 隐藏表单.
 		 * @return $this
@@ -174,7 +174,7 @@
 		{
 			return $this->key($name, $title, $tips, 'string', null, $default, $verify);
 		}
- 
+
 		/**
 		 * 备案信息
 		 * @param string $field
@@ -327,7 +327,7 @@
 				1 => '男',
 				0 => '保密',
 			];
-			return $this->keyRadio($field, $title, $options, $tips,$default);
+			return $this->keyRadio($field, $title, $options, $tips, $default);
 		}
 
 
@@ -395,6 +395,22 @@
 		public function keySelectMultiple($field, $title, $options, $tips = null, $default = '', $size = 30, $verify = null)
 		{
 			return $this->key($field, $title, $tips, 'select_multiple', $options, $default, $verify, $size);
+		}
+
+		/**
+		 * 多级下拉选择
+		 * @param string $field
+		 * @param string $title
+		 * @param array $options
+		 * @param string|null $tips
+		 * @param bool $multiple 是否开启多项选择
+		 * @param array|null $verify
+		 * @param int $size
+		 * @return $this
+		 */
+		public function keySelectMultistage($field, $title, $options, $tips = null, $default = '', $verify = null)
+		{
+			return $this->key($field, $title, $tips, 'select_multistage', $options, $default, $verify);
 		}
 
 		/**
@@ -530,7 +546,8 @@
 		 */
 		public function keyAuth($field, $title = '实名认证', $tips = null, $need_hand = 1)
 		{
-			return $this->key($field, $title, $tips, 'auth', $need_hand ? $need_hand : 0);
+			$options['need_hand'] = $need_hand ? $need_hand : 0;
+			return $this->key($field, $title, $tips, 'auth', $options);
 		}
 
 		/**
@@ -612,11 +629,10 @@
 		 * @param null $verify
 		 * @param int $size
 		 * @return $this
-		 * @throws Exception
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/4/23 14:57
 		 */
-		public function keyDecimal($field, $title, $tips = null, $default = '', $verify = null, $size = 15)
+		public function keyDecimal($field, $title, $tips = null, $default = '', $verify = null, $size = '')
 		{
 			$verify_default = [
 				'rule' => 'money',
@@ -625,7 +641,7 @@
 				'ok' => '',
 			];
 			$verify = is_array($verify) ? array_merge($verify_default, $verify) : $verify_default;
-			return $this->key($field, $title, $tips, 'number', null, $default, $verify, $size);
+			return $this->key($field, $title, $tips, 'number', null, $default, $verify, $size, null, '￥');
 		}
 
 		/**
@@ -641,13 +657,7 @@
 		 */
 		public function keySort($field = 'sort', $title = '排序', $tips = '数值越大越靠前，最大255', $default = 0)
 		{
-			//            $verify = [
-			//                'rule' => 'sort',
-			//                'rule-sort' => '[/^(\d|[1-9]\d?|1\d{2}?|2[0-4][0-9]?|25[0-5])$/, \'请填写0-255之间的数字\']',
-			//                'tip' => '请填写0-255之间的数字',
-			//                'ok' => '',
-			//            ];
-			return $this->key($field, $title, $tips, 'number', null, $default, 'require|number|sort', 30);
+			return $this->key($field, $title, $tips, 'number', null, $default, 'require|number|sort');
 		}
 
 		/**
@@ -945,7 +955,6 @@
 		 * @param int $limit
 		 * @param null $verify
 		 * @return $this
-		 * @throws Exception
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/5/8 11:58
 		 */
@@ -967,7 +976,6 @@
 		 * @param int $limit
 		 * @param null $verify
 		 * @return $this
-		 * @throws Exception
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/5/8 11:58
 		 */
@@ -989,7 +997,6 @@
 		 * @param int $size
 		 * @param null $verify
 		 * @return $this
-		 * @throws Exception
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/5/8 11:58
 		 */
@@ -1038,17 +1045,19 @@
 		 * @param string $default
 		 * @param null $verify
 		 * @return $this
-		 * @throws Exception
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/4/12 10:35
 		 */
-		protected function key($field, $title, $tips, $type, $options = null, $default = '', $verify = null, $size = 30, $disabled = null)
+		protected function key($field, $title, $tips, $type, $options = null, $default = '', $verify = null, $size = null, $disabled = null, $placeholder = '')
 		{
 			if (is_array($verify)) {
 				$verify = implode($verify, '|');
 			}
 			if (strpos($verify, ',')) {
 				$verify = str_replace(',', '|', $verify);
+			}
+			if (false !== strpos($verify, 'require')) {
+				$verify = str_replace('require', 'required', $verify);
 			}
 			$key = [
 				'field' => $field,
@@ -1057,7 +1066,7 @@
 				'type' => $type,
 				'default' => $default,
 				'disabled' => $disabled,
-				'placeholder' => '',
+				'placeholder' => $placeholder,
 				'size' => $size,
 				'verify' => $verify,
 				'options' => $options,

@@ -249,9 +249,8 @@
     {/notempty}
     {/case}
     {case value="number"}
-    <div class="layui-input-inline" style="width:{$field.size} px">
-        <input type="number" name="{$field.field}" value="{$field['value']}" class="layui-input"
-               lay-verify="{$field['verify']|raw}" value="{$field['value']}">
+    <div class="layui-input-inline" style="width:{$field.size}px">
+        <input type="number" name="{$field.field}" value="{$field['value']}" class="layui-input" placeholder="{$field.placeholder}"   lay-verify="{$field['verify']|raw}">
     </div>
 
     {notempty name='field.tips'}
@@ -269,7 +268,7 @@
 
     {/case}
     {case value="slider"}
-    <div class="layui-input-inline" style="width:{$field.size} px">
+    <div class="layui-input-inline" style="width:{$field.size}px">
         <div id="slideTest3" class="demo-slider"></div>
     </div>
     {notempty name='field.tips'}
@@ -467,7 +466,7 @@
     {case value="select_multiple"}
     <div class="layui-input-inline">
         <!-- 多选菜单 -->
-        <select data-toggle="selectpicker" lay-verify="{$field['verify']|raw}" data-width='{$field[' size']?:'80%'}'
+        <select data-toggle="selectpicker" lay-verify="{$field['verify']|raw}" data-width='{$field['size']?:'80%'}'
         name="{$field.field}[]" multiple>
         {volist name="field.options" id="option"}
         {php}
@@ -477,9 +476,11 @@
         $field['value_array'] =$field['value'];
         }
         $checked = in_array($key,$field['value_array']) ? ' selected="true"' : '';
-        $inputId = "id_$field[name]_$key";
+
+     //   halt($field);
+      $inputId = "id_11_$key";
         {/php}
-        <option {$checked} id="{$inputId}" value="{$key}">{$option|htmlspecialchars}</option>
+        <option {$checked}   value="{$key}">{$option|htmlspecialchars}</option>
 
         {/volist}
         </select>
@@ -487,6 +488,36 @@
 
 
     </div>
+    {/case}
+  {case value="select_multistage"}
+    <div class="layui-input-inline" style="width: 230px">
+        <!-- 多选菜单 -->
+        <input type="text"  name="{$field.field}" id="key_{$field.field}" value="{$field.value}"  style="display: none;" />
+        <!-- 多选菜单end -->
+    </div>
+    {notempty name='field.tips'}
+    <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
+    {/notempty}
+
+    <script type="text/javascript">
+        layui.use(['jquery', 'cascader'], function () {
+            var $ = layui.jquery, cascader = layui.cascader;
+            cascader.render({
+                elem: $('input[name={$field.field}]')[0],
+                multiple: false,
+                multiSeparator: '|',
+                showAllLevels: true,
+                collapseTags: true,
+                props: {
+                    label: 'title',
+                    value: 'id',
+                    children: 'children'
+                },
+                options: JSON.parse('{$field.options|json_encode|raw}'),
+                // options: {$field.options|json_encode|raw},
+            });
+        });
+    </script>
     {/case}
 
     {case value="checkbox"}
@@ -961,7 +992,7 @@ $checked = $field['value']==$key ? 'checked' : '';
 {case value="MultipleImage"}
 <div class="layui-input-block">
     {php}
-    $images = \app\file\model\Picture::where('id','in',$field['value'])->select();
+    $images = \app\file\model\Image::where('id','in',$field['value'])->select();
     {/php}
     <style>
         .layui-upload-img {
@@ -996,7 +1027,7 @@ $checked = $field['value']==$key ? 'checked' : '';
                ,acceptMime: 'image/*'
                 //  ,exts: 'zip|rar|7z' //只允许上传压缩文件
                 //   ,size: 60 //限制文件大小，单位 KB
-                , url: "{:\\think\\facade\\Url::build('file/Picture/upload')}"
+                , url: "{:\\think\\facade\\Url::build('file/Image/upload')}"
                 , multiple: true
                 , before: function (obj) {
 
@@ -1071,7 +1102,9 @@ $checked = $field['value']==$key ? 'checked' : '';
             margin: 0 5px 0 0;
         }
     </style>
-{php} $auth = isset($field['data']['auth'])?$field['data']['auth']:''{/php}
+{php} $auth = isset($field['data']['auth'])?$field['data']['auth']:'';
+
+    {/php}
     <div class="layui-row" style="    display: flex;">
         <div class="layui-col-xs2">
             <div class="layui-upload-list front">
@@ -1092,7 +1125,7 @@ $checked = $field['value']==$key ? 'checked' : '';
             </div>
             <button type="button" class="layui-btn button-upload-auth-image-back">身份证背面</button>
         </div>
-  <div class="layui-col-xs2 {php} if( !isset($field['data']['auth'])){ echo 'layui-hide';}{/php} " id="show_hand">
+  <div class="layui-col-xs2 {php} if( !$field['options']['need_hand'] ||!isset($field['data']['auth'])){ echo 'layui-hide';}{/php} " id="show_hand">
             <div class="layui-upload-list front">
                 <img class="layui-upload-img-card button-upload-auth-image-hand"
                      src="{$field['data']['auth']['hand']['url']|default='__COMMON__/images/idcard/h.jpg'}">
@@ -1118,7 +1151,7 @@ $checked = $field['value']==$key ? 'checked' : '';
                 , accept: 'images' //普通文件
                 , exts: 'png|jpg|jpeg'
                 , size: 1024 * 2 //限制文件大小，单位 KB
-                , url: "{:\\think\\facade\\Url::build('file/Picture/upload',['module'=>$request->module()])}"
+                , url: "{:\\think\\facade\\Url::build('file/Image/upload',['module'=>$request->module()])}"
                 , data: {
                     type: 'idcard',
                     side: 'front',
@@ -1141,7 +1174,7 @@ $checked = $field['value']==$key ? 'checked' : '';
                         $("[name='auth[idcard_name]").val(res.data.info.name);
                         $("[name='auth[idcard_no]").val(res.data.info.idcard_no);
 
-                        if ("1" == "{$field.options}")
+                        if ("1" == "{$field.options.need_hand}")
                         {
                             initHand();
                             $("#show_hand").removeClass('layui-hide');
@@ -1163,7 +1196,7 @@ $checked = $field['value']==$key ? 'checked' : '';
                 , accept: 'images' //普通文件
                 , exts: 'png|jpg|jpeg'
                 , size: 1024 * 2 //限制文件大小，单位 KB
-                , url: "{:\\think\\facade\\Url::build('file/Picture/upload')}"
+                , url: "{:\\think\\facade\\Url::build('file/Image/upload')}"
                 , data: {
                     type: 'idcard',
                     side: 'back',
@@ -1202,7 +1235,7 @@ $checked = $field['value']==$key ? 'checked' : '';
                     , accept: 'images' //普通文件
                     , exts: 'png|jpg|jpeg'
                     , size: 1024 * 2 //限制文件大小，单位 KB
-                    , url: "{:\\think\\facade\\Url::build('file/Picture/upload')}"
+                    , url: "{:\\think\\facade\\Url::build('file/Image/upload')}"
                     , data: {
                         front_id: $("#front_id").val(),
                         type: 'hand'
@@ -1253,10 +1286,10 @@ $checked = $field['value']==$key ? 'checked' : '';
 
 $images = [];
     if(is_numeric($field['value']) && $field['value']>0){
-        $picture = \app\file\model\Picture::find($field['value']);
-        if($picture){
-        $field['value'] = $picture['id'];
-        $field['url'] = $picture['url'];
+        $Image = \app\file\model\Image::find($field['value']);
+        if($Image){
+        $field['value'] = $Image['id'];
+        $field['url'] = $Image['url'];
         }else{
         $field['value'] = '';
         $field['url'] = '/static/common/images/default_image_240.gif';
@@ -1276,7 +1309,6 @@ $images = [];
         }
 
     }
-
 {/php}
 
 <div class="layui-input-inline">
@@ -1305,7 +1337,7 @@ $images = [];
                 //  ,accept: 'file' //普通文件
                 //  ,exts: 'zip|rar|7z' //只允许上传压缩文件
                 //   ,size: 60 //限制文件大小，单位 KB
-                , url: "{:\\think\\facade\\Url::build('file/Picture/upload')}"
+                , url: "{:\\think\\facade\\Url::build('file/Image/upload')}"
                 , before: function (obj) {
                     //预读本地文件示例，不支持ie8
                     obj.preview(function (index, file, result) {
@@ -1334,7 +1366,7 @@ $images = [];
             //多图片上传
             upload.render({
                 elem: '#test-upload-more'
-                , url: '{:\\think\\facade\\Url::build(\'file/Picture/upload\')}'
+                , url: '{:\\think\\facade\\Url::build(\'file/Image/upload\')}'
                 , multiple: true
                 , before: function (obj) {
                     //预读本地文件示例，不支持ie8
@@ -1358,7 +1390,7 @@ $images = [];
                  src="{$single_image|default=\\think\\facade\\Config::get('default.image_240')}">
             <div class="caption">
                 <p>
-                    <a href="{:\\think\\facade\\Url::build('admin/Picture/upload',['file_limit'=>1,'callback'=>'singel_image_'.$field['field']])}"
+                    <a href="{:\\think\\facade\\Url::build('admin/Image/upload',['file_limit'=>1,'callback'=>'singel_image_'.$field['field']])}"
                         class="btn btn-primary" role="button"data-toggle="dialog" data-mask = 'true' data-width = '1200' data-height = '800'
                         data-id="singel_image_{$field.field}_dialog">{$field['value']? '替换图片': '上传图片'}</a>
                 </p>

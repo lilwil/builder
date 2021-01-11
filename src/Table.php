@@ -2,7 +2,7 @@
 	// +----------------------------------------------------------------------
 	// | builder
 	// +----------------------------------------------------------------------
-	// | Copyright (c) 2015-2019 http://www.yicmf.com, All rights reserved.
+	// | Copyright (c) 2015-2022 http://www.yicmf.com, All rights reserved.
 	// +----------------------------------------------------------------------
 	// | Author: 微尘 <yicmf@qq.com>
 	// +----------------------------------------------------------------------
@@ -992,12 +992,21 @@ EOF;
 		public function keyDecimal($field, $title, $sort = false, $width = '', $style = '')
 		{
 			$templet = uniqid();
+
+			if ($style == '' &&  'zh-cn' == $this->request->langset())
+			{
+				$style = 'rmb';
+			}elseif ($style == ''){
+				$style = 'dollar';
+			}
+
 			$this->_templets[] = <<<EOF
 <script type="text/html" id="$templet">
-   <i class="layui-icon layui-icon-face-smile"></i>
+   <i class="layui-icon layui-icon-$style"></i> {{d.$field}}
 </script>
 EOF;
-			return $this->key($field, $title, $sort, $width, $style, '#' . $templet);
+			return $this->key($field, $title, $sort, $width, 'normal', $style, '#' . $templet);
+
 		}
 
 		public function keyDollar($field, $title, $sort = false, $width = '', $style = '')
@@ -1209,7 +1218,7 @@ EOF;
 		//        {
 		//            return $this->key($field, $title,  $sort, $width,'normal');
 		//        }
-		public function keyPicture($field, $title, $sort = false, $style = '')
+		public function keyImage($field, $title, $sort = false, $style = '')
 		{
 			if (strpos($field, '|')) {
 				$temp = explode('|', $field);
@@ -1251,7 +1260,7 @@ EOF;
 			$common = config('template.tpl_replace_string.__COMMON__') . '/images/avatar_default.png';
 			$this->_templets[] = <<<EOF
 <script type="text/html" id="$templet_name">
- <img style="display: inline-block; width: 25px; height: 25px;border-radius: 50%;" src= {{ d.{$with_field}?d.{$with_field}.avatar:'{$common}' }}>  {{ d.{$with_field}?d.{$with_field}.nickname:'无用户' }}
+ <img style="display: inline-block; width: 25px; height: 25px;border-radius: 50%;" src= {{ d.{$with_field}?d.{$with_field}.avatar.url:'{$common}' }}>  {{ d.{$with_field}?d.{$with_field}.nickname:'无用户' }}
 </script>
 EOF;
 			return $this->key($field, $title, $sort, 150, 'normal', $style, '#' . $templet_name);
@@ -2110,10 +2119,13 @@ EOF;
 				}
 			}
 			foreach ($this->_with as $key => $items) {
-				if (isset($data[$key])) {
+				if (isset($data[$key]) && !is_string($data[$key])) {
+					$temp =[];
 					foreach ($items as $item) {
-						$conver_data[$key][$item] = $data[$key][$item];
+//						$conver_data[$key][$item] = $data[$key][$item];
+						$temp[$item] = $data[$key][$item];
 					}
+					$conver_data[$key] = $temp;
 				} else {
 					$conver_data[$key] = null;
 				}
