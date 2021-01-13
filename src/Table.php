@@ -2,7 +2,7 @@
 	// +----------------------------------------------------------------------
 	// | builder
 	// +----------------------------------------------------------------------
-	// | Copyright (c) 2015-2022 http://www.yicmf.com, All rights reserved.
+	// | Copyright (c) 2015-2019 http://www.yicmf.com, All rights reserved.
 	// +----------------------------------------------------------------------
 	// | Author: 微尘 <yicmf@qq.com>
 	// +----------------------------------------------------------------------
@@ -85,7 +85,7 @@
 		 * 操作表宽度
 		 * @var int
 		 */
-		protected $_action_width;
+		protected $_key_action_width;
 		protected $_excel = [];
 
 		/**
@@ -1707,9 +1707,9 @@ EOF;
 		 * @author 微尘 <yicmf@qq.com>
 		 * @datetime: 2020/7/16 16:58
 		 */
-		public function actionWidth($width)
+		public function keyActionWidth($width)
 		{
-			$this->_action_width = $width;
+			$this->_key_action_width = $width;
 			return $this;
 		}
 
@@ -1875,7 +1875,7 @@ EOF;
 						}
 					}
 					if (count($this->_do_action)) {
-						if (is_null($this->_action_width)) {
+						if (is_null($this->_key_action_width)) {
 							$status = [];
 							$object = [];
 							foreach ($this->_do_action as $item) {
@@ -1899,14 +1899,14 @@ EOF;
 									$max = $v;
 								}
 							}
-							$this->_action_width = (($max + count($object) - 1) * 70 + 100);
+							$this->_key_action_width = (($max + count($object) - 1) * 70 + 100);
 						}
 						$this->_keyList[] = [
 							'fixed' => 'right',
 							'title' => '操作',
 							'align' => 'center',
 							'toolbar' => '#' . $this->_namespace . '-table-action',
-							'width' => $this->_action_width
+							'width' => $this->_key_action_width
 						];
 						!empty($this->_left_leader) && array_unshift($this->_keyList, $this->_left_leader);
 					}
