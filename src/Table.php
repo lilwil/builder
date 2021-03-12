@@ -29,6 +29,7 @@
 		private $_namespace;
 
 		private $_suggest;
+		private $_statistics;
 
 		private $_warning;
 
@@ -291,6 +292,21 @@
 		public function suggest($suggest)
 		{
 			$this->_suggest = $suggest;
+			return $this;
+		}
+		/**
+		 * 统计信息
+		 * @param $suggest
+		 * @return $this
+		 * @author  : 微尘 <yicmf@qq.com>
+		 * @datetime: 2019/3/28 13:34
+		 */
+		public function statistics($title,$count)
+		{
+			$this->_statistics[] = [
+				'title'=>$title,
+				'count'=>$count
+			];
 			return $this;
 		}
 
@@ -717,17 +733,29 @@
 		 * 时间搜索.
 		 * @param string $field
 		 * @param string $title
+		 * @param array|string|null $value
 		 * @param array $attr
 		 * @return $this
 		 */
-		public function searchTime($field, $title, $attr = [])
+		public function searchTime($field, $title, $value = null, $attr = [])
 		{
+			if (is_string($value))
+			{
+				if (time_format($value) < time_format('now'))
+				{
+					$value =time_format($value) .' - '.time_format('now');
+				}else{
+
+					$value = time_format('now').' - '.time_format($value);
+				}
+			}
 			$this->_search[] = [
 				'title' => $title,
 				'field' => $field,
 				'type' => 'datepicker',
 				'condition' => 'between',
 				'attr' => $attr,
+				'value' => $value,
 			];
 			return $this;
 		}
@@ -993,10 +1021,9 @@ EOF;
 		{
 			$templet = uniqid();
 
-			if ($style == '' &&  'zh-cn' == $this->request->langset())
-			{
+			if ($style == '' && 'zh-cn' == $this->request->langset()) {
 				$style = 'rmb';
-			}elseif ($style == ''){
+			} elseif ($style == '') {
 				$style = 'dollar';
 			}
 
@@ -1342,16 +1369,14 @@ EOF;
 		 * @param $url Closure|string 可以是函数或U函数解析的字符串。如果是字符串，该函数将附带一个id参数
 		 * @return Table
 		 */
-		public function keyProgress($field, $title, $url, $arr = [], $width = '')
+		public function keyProgress($field, $title, $sort = false, $width = '')
 		{
-			$arr['width'] = isset($arr['width']) ? $arr['width'] : $this->dialog_width_default;
-			$arr['height'] = isset($arr['height']) ? $arr['height'] : $this->dialog_height_default;
 			// 修整添加多个空字段时显示不正常的
 			$templet = uniqid();
 			$this->_templets[] = <<<EOF
   <script type="text/html" id="$templet">
-        <div class="layui-progress layuiadmin-order-progress" lay-filter="progress-"+ {{ d.orderid }} +"">
-          <div class="layui-progress-bar layui-bg-blue" lay-percent= {{ d.progress }}></div>
+        <div class="layui-progress layuiadmin-order-progress" lay-filter="progress-"+ {{ d.id }} +"">
+          <div class="layui-progress-bar layui-bg-blue" lay-percent= {{ d.$field }}></div>
         </div>
       </script>
 
@@ -1947,6 +1972,7 @@ EOF;
 					$this->assign('toolbar', $this->_toolbar);
 					$this->assign('namespace', $this->_namespace);
 					$this->assign('suggest', $this->_suggest);
+					$this->assign('statistics', $this->_statistics);
 					$this->assign('warning', $this->_warning);
 					$this->assign('keyList', $this->_keyList);
 					$this->assign('buttonList', $this->_buttonList);
@@ -2120,7 +2146,7 @@ EOF;
 			}
 			foreach ($this->_with as $key => $items) {
 				if (isset($data[$key]) && !is_string($data[$key])) {
-					$temp =[];
+					$temp = [];
 					foreach ($items as $item) {
 //						$conver_data[$key][$item] = $data[$key][$item];
 						$temp[$item] = $data[$key][$item];

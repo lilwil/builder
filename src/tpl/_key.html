@@ -8,7 +8,7 @@
 
 <div class="layui-form-item" id="trigger_{$field['jquery_id']}">
 
-    <label class="layui-form-label">{$field.title|htmlspecialchars}</label>
+  {notempty name='field.title'}  <label class="layui-form-label">{$field.title|htmlspecialchars}</label>{/notempty}
     {switch name="field.type"}
     {case value="string"}
     <div class="layui-input-block">
@@ -78,9 +78,14 @@
 
     {/case}
     {case value="label"}
-    <div class="layui-input-block">
+    <div class="layui-input-inline">
         <span style="line-height: 38px;">{$field.value}</span>
+
+
     </div>
+    {notempty name='field.tips'}
+    <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
+    {/notempty}
     {/case}
     {case value="password"}
     <div class="layui-input-inline">
@@ -96,6 +101,28 @@
     {notempty name='field.tips'}
     <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
     {/notempty}
+
+    {/case}
+
+    {case value="time_cycle"}
+    {php}
+  dump($field);
+
+    {/php}
+    <div class="layui-input-inline" style="width: 100px;">
+        <input type="text" name="price_min" placeholder="￥" autocomplete="off" class="layui-input">
+    </div>
+    <div class="layui-form-mid">-</div>
+    <div class="layui-input-inline" style="width: 100px;">
+        <select name="interest" lay-filter="aihao">
+            <option value=""></option>
+            <option value="0">写作</option>
+            <option value="1" selected="">阅读</option>
+            <option value="2">游戏</option>
+            <option value="3">音乐</option>
+            <option value="4">旅行</option>
+        </select>
+    </div>
 
     {/case}
     {case value="amap"}
@@ -363,8 +390,12 @@
         <div class="layui-input-block">
             {php}
             $select_ids = [];
-            foreach ($field['value'] as $key => $item) {
-            $select_ids[] = $item['id'];
+
+            if($field['value'])
+            {
+                foreach ($field['value'] as $key => $item) {
+                $select_ids[] = $item['id'];
+                }
             }
             if (is_array($field['options']['column'])) {
                 $fields = [];
@@ -377,49 +408,60 @@
                 }
             } else {
 
+            $fields = [];
             }
             {/php}
 
-            <div id="demo1" class="xm-select-demo"></div>
+            <div id="xm-select-{$field.field}-{$uniqid}" class="xm-select-demo"></div>
             <script type="text/javascript">
-                var demo1 = xmSelect.render({
-                    el: '#demo1',
-                    size: 'large',
-                    name: "{$field.field}",
-                    data: {$fields|json_encode|raw}
+
+                //加载组件
+                layui.use(['xmSelect'], function(){
+                    var xmSelect = layui.xmSelect;
+
+                    //渲染多选
+
+                    var demo1 = xmSelect.render({
+                        el: '#xm-select-{$field.field}-{$uniqid}',
+                        size: 'large',
+                        name: "{$field.field}",
+                        data: {$fields|json_encode|raw}
                 })
-                /*var demo1 = xmSelect.render({
-                    el: '#demo1',
-                    data: [
-                        {name: '张三', value: 1, selected: true},
-                        {name: '李四', value: 2, selected: true},
-                        {name: '王五', value: 3, disabled: true},
-                    ],
-                    autoRow: true,
-                    toolbar: { show: true },
-                    filterable: true,
-                    remoteSearch: true,
-                    remoteMethod: function(val, cb, show){
-                        //这里如果val为空, 则不触发搜索
-                        if(!val){
-                            return cb([]);
-                        }
-                        //这里引入了一个第三方插件axios, 相当于$.ajax
-                        $.ajax({
-                            method: 'get',
-                            url: 'https://www.fastmock.site/mock/98228b1f16b7e5112d6c0c87921eabc1/xmSelect/search',
-                            params: {
-                                keyword: val,
+                    /*var demo1 = xmSelect.render({
+                        el: '#demo1',
+                        data: [
+                            {name: '张三', value: 1, selected: true},
+                            {name: '李四', value: 2, selected: true},
+                            {name: '王五', value: 3, disabled: true},
+                        ],
+                        autoRow: true,
+                        toolbar: { show: true },
+                        filterable: true,
+                        remoteSearch: true,
+                        remoteMethod: function(val, cb, show){
+                            //这里如果val为空, 则不触发搜索
+                            if(!val){
+                                return cb([]);
                             }
-                        }).then(response => {
-                            var res = response.data;
-                            cb(res.data)
-                        }).catch(err => {
-                            cb([]);
-                        });
-                    },
+                            //这里引入了一个第三方插件axios, 相当于$.ajax
+                            $.ajax({
+                                method: 'get',
+                                url: 'https://www.fastmock.site/mock/98228b1f16b7e5112d6c0c87921eabc1/xmSelect/search',
+                                params: {
+                                    keyword: val,
+                                }
+                            }).then(response => {
+                                var res = response.data;
+                                cb(res.data)
+                            }).catch(err => {
+                                cb([]);
+                            });
+                        },
+                    })
+        */
+
                 })
-    */
+
             </script>
 
         </div>
@@ -457,35 +499,159 @@
         <option value="{$key}" {$selected}>{$option}</option>
         {/volist}
         </select>
-
         <!-- 单选菜单end -->
-
-
     </div>
+    {notempty name='field.tips'}
+    <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
+    {/notempty}
     {/case}
     {case value="select_multiple"}
-    <div class="layui-input-inline">
-        <!-- 多选菜单 -->
-        <select data-toggle="selectpicker" lay-verify="{$field['verify']|raw}" data-width='{$field['size']?:'80%'}'
-        name="{$field.field}[]" multiple>
-        {volist name="field.options" id="option"}
-        {php}
-        if(!is_array($field['value'])){
-        $field['value_array'] = explode(',', $field['value']);
-        }else{
-        $field['value_array'] =$field['value'];
+    <style>
+        xm-select .scroll-body{
+            padding-left: 10px;
+            overflow: hidden;
         }
-        $checked = in_array($key,$field['value_array']) ? ' selected="true"' : '';
+    </style>
+    <div class="layui-input-block">
+        <!-- 多选菜单 -->
 
-     //   halt($field);
-      $inputId = "id_11_$key";
-        {/php}
-        <option {$checked}   value="{$key}">{$option|htmlspecialchars}</option>
-
-        {/volist}
-        </select>
         <!-- 多选菜单end -->
 
+            {php}
+            $ajax = 0;
+            $select_ids = [];
+            if($field['value'])
+            {
+            $select_ids = explode(',',$field['value']);
+            }
+            if (is_array($field['options'])) {
+                $fields = [];
+                foreach ($field['options'] as $key => $item) {
+                    $fields[] = [
+                    'name' => $item,
+                    'selected' => in_array($key,$select_ids),
+                    'value' => $key
+                    ];
+                }
+            }elseif($field['options'] instanceof \Closure)
+            {
+                $ajax = 1;
+                $fields = [];
+            } else {
+                $fields = [];
+            }
+
+            {/php}
+
+            <div id="xm-select-{$field.field}-{$uniqid}" class="xm-select-demo"></div>
+            <script type="text/javascript">
+
+                        //加载组件
+                layui.use(['jquery','xmSelect'], function(){
+                    var xmSelect = layui.xmSelect;
+                        var $ = layui.jquery;
+                    //渲染多选
+                    if({$ajax})
+                    {
+
+                        var demo1 = xmSelect.render({
+                            el: '#xm-select-{$field.field}-{$uniqid}',
+                            size: 'large',
+                            toolbar:{
+                                show: true,
+                            },
+                            autoRow: true,
+                            height: '500px',
+                          //  name: "{$field.field}",
+                            filterable: true,
+                            remoteSearch: true,
+                            remoteMethod: function(val, cb, show){
+                                //这里如果val为空, 则不触发搜索
+                                if(!val){
+                                    return cb([]);
+                                }
+
+                                $.ajax({
+                                   url: "{:url('')}", //请求的url地址
+                                   //  url: 'https://www.fastmock.site/mock/98228b1f16b7e5112d6c0c87921eabc1/xmSelect/search',
+                                    dataType: "json", //返回格式为json
+                                    type: "GET", //请求方式
+                                    data: {
+                                        ajax: '{$field.field}',
+                                        keyword: val,
+                                    }, //请求方式
+                                    success: function (req) {
+                                        cb(req.data)
+                                    },
+                                    complete: function () {
+                                        //请求完成的处理
+                                       // layer.close(loading);
+                                    },
+                                    error: function (err) {
+                                        //请求出错处理
+                                        layer.close(loading);
+                                        layer.msg(JSON.stringify(err));
+                                    }
+                                });
+
+
+                            },
+                        })
+
+
+                    }else{
+
+
+                        var demo1 = xmSelect.render({
+                            el: '#xm-select-{$field.field}-{$uniqid}',
+                            size: 'large',
+                            toolbar:{
+                                show: true,
+                            },
+                            autoRow: true,
+                            height: '500px',
+                            name: "{$field.field}",
+                            data: {$fields|json_encode|raw}
+                    });
+
+
+                }
+                    /*var demo1 = xmSelect.render({
+                         el: '#xm-select-{$field.field}-{$uniqid}',
+                        data: [
+                            {name: '张三', value: 1, selected: true},
+                            {name: '李四', value: 2, selected: true},
+                            {name: '王五', value: 3, disabled: true},
+                        ],
+                        autoRow: true,
+                        toolbar: { show: true },
+                        filterable: true,
+                        remoteSearch: true,
+                        remoteMethod: function(val, cb, show){
+                            //这里如果val为空, 则不触发搜索
+                            if(!val){
+                                return cb([]);
+                            }
+                            //这里引入了一个第三方插件axios, 相当于$.ajax
+                            $.ajax({
+                                method: 'get',
+                                url: 'https://www.fastmock.site/mock/98228b1f16b7e5112d6c0c87921eabc1/xmSelect/search',
+                                params: {
+                                    keyword: val,
+                                }
+                            }).then(response => {
+                                var res = response.data;
+                                cb(res.data)
+                            }).catch(err => {
+                                cb([]);
+                            });
+                        },
+                    })
+        */
+
+                })
+
+            </script>
 
     </div>
     {/case}
@@ -513,8 +679,8 @@
                     value: 'id',
                     children: 'children'
                 },
-                options: JSON.parse('{$field.options|json_encode|raw}'),
-                // options: {$field.options|json_encode|raw},
+                // options: JSON.parse('{$field.options|json_encode}'),
+                options: {$field.options|json_encode|raw},
             });
         });
     </script>
@@ -632,7 +798,7 @@
 
 <div class="layui-input-inline">
     <script id="{$field.id_name}" name="{$field.field}" type="text/plain" style="width:1024px;height:500px;">
-        {$field.value}
+        {$field.value|raw}
     </script>
     {notempty name='field.tips'}
     <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
@@ -653,7 +819,7 @@
             wordCount: false,
             enableAutoSave: true,
             initialFrameHeight: 500,
-            toolbars: {$field.config.items | json_encode}
+            toolbars: {$field.config.items|raw|json_encode}
             //      serverUrl: "{$field.config.upload}"
         });
         /*  var ieditor = UE.getEditor('editor_{$field.field}', {
@@ -989,10 +1155,23 @@ $checked = $field['value']==$key ? 'checked' : '';
 
 {/case}
 
-{case value="MultipleImage"}
+{case value="ImageMultiple"}
 <div class="layui-input-block">
     {php}
-    $images = \app\file\model\Image::where('id','in',$field['value'])->select();
+    if(is_string($field['value']))
+    {
+        $images = \app\file\model\Image::where('id','in',$field['value'])->select();
+    }else{
+        $images = $field['value'];
+    }
+
+    $values = [];
+
+    foreach ($images as $item) {
+    $values[]=$item['id'];
+    }
+    $values = implode(',',$values);
+
     {/php}
     <style>
         .layui-upload-img {
@@ -1003,14 +1182,13 @@ $checked = $field['value']==$key ? 'checked' : '';
     </style>
     <button type="button" class="layui-btn" id="button-upload-MultipleImage-{$field.field}">上传图片</button>
     <div class="layui-upload-list">
-        <input type="hidden" name="{$field.field}" id="file_value_{$field.field}" value="{$field['value']}"/>
+        <input type="hidden" name="{$field.field}" id="file_value_{$field.field}" value="{$values}"/>
         <img class="layui-upload-img" style="display: none" id="test-upload-normal-img" src="/static/common/images/default_image_240.gif">
             <div class="layui-upload-list" id="upload-MultipleImage-list-{$field.field}">
                 {volist name='images' id='vo'}
-                <div style="    display: inline-block;">
-                    <i class="layui-icon layui-icon-face-smile" style="font-size: 30px; color: #1E9FFF;display: none"></i>
+
                     <img class="layui-upload-img"  data-id="{$vo.id}" src="{$vo['url']}">
-                </div>
+
                 {/volist}
             </div>
 
@@ -1071,6 +1249,7 @@ $checked = $field['value']==$key ? 'checked' : '';
 
                     var arr = new Array();
                     console.log(obj)
+                    console.log( $("#upload-MultipleImage-list-{$field.field}").children("img"))
                     $("#upload-MultipleImage-list-{$field.field}").children("img").each(function(){
                        if ($(this).data('id'))
                        {
@@ -1092,6 +1271,36 @@ $checked = $field['value']==$key ? 'checked' : '';
         });
     </script>
 
+
+</div>{/case}
+{case value="ImageShowMultiple"}
+<div class="layui-input-block">
+    {php}
+    if(is_string($field['value']))
+    {
+        $images = \app\file\model\Image::where('id','in',$field['value'])->select();
+    }else{
+        $images = $field['value'];
+    }
+
+    $values = [];
+
+    foreach ($images as $item) {
+    $values[]=$item['id'];
+    }
+    $values = implode(',',$values);
+
+    {/php}
+    <div class="layui-upload-list">
+            <div class="layui-upload-list" id="upload-MultipleImage-list-{$field.field}">
+                {volist name='images' id='vo'}
+
+                    <img class="layui-upload-img"  data-id="{$vo.id}" src="{$vo['url']}">
+
+                {/volist}
+            </div>
+
+    </div>
 
 </div>{/case}
 {case value="auth"}
@@ -1412,159 +1621,60 @@ $images = [];
     {/php}
     <div class="row">
         <div class="col-md-3">
-            <div id="picker{$field.field}">选择文件</div>
-            <span id="picker{$field.field}_progress" style="display: none" class="glyphicon glyphicon-upload"
-                  aria-hidden="true"></span>
+            <button type="button" class="layui-btn" id="button-upload-normal-file-{$field.field}"><i class="layui-icon layui-icon-upload"></i>   上传文件</button>
 
         </div>
-        <div class="col-md-9">
-            <div id='show_{$field.field}_dialog' {empty name='attachment' }style="display: none;" {
-            /empty} >
-            <span class="glyphicon glyphicon-file" aria-hidden="true"></span><span id='show_{$field.field}_dialog_name'>{$attachment['field']|default=''}</span>
-            <br>
-            文件大小：<span id='singel_file_{$field.field}_size'>{$attachment['size_info']|default=''}</span>
+        <div class="col-md-9" id="show-upload-normal-file-{$field.field}">
+            {notempty name='attachment' }
+
+            文件大小：{$attachment['size_info']|default=''}
             <input type="hidden" id='singel_file_{$field.field}' name="{$field.field}" value="{$field['value']}">
+            {/notempty}
+
         </div>
         <script type="text/javascript">
-            $(document).ready(function () {
-                //http://fex.baidu.com/webuploader/doc/index.html 参考地址
-                var uploader_a_
-                {
-                    $field.field
-                }
-                = WebUploader.create({
-                    // 选完文件后，是否自动上传。
-                    auto: true,
-                    chunked: true,
-                    threads: 1,
-                    chunkSize: 1024 * 1024 * 2,
-                    // swf文件路径
-                    swf: '/static/b-jui/plugins/webuploader/Uploader.swf',
-                    // 文件接收服务端。
-                    server: "{:\\think\\facade\\Url::build('file/Attachment/upload')}",
-                    // 选择文件的按钮。可选。
-                    // 内部根据当前运行是创建，可能是input元素，也可能是flash.
-                    pick: '#picker{$field.field}',
-                    fileSizeLimit: 1024 * 1024 * {$field.options.size},
-                    compress: false,
-                    // 文件限制类型。
-                    accept: {
-                        title: '文件',
-                        extensions: '{$field.options.extensions}'//,
-                        // mimeTypes: '{:\\think\\facade\\Config::get('upload_attachment.mimes')}'
-                    },
-                    fileVal: 'attachment',
-                });
-                //文件上传成功
-                uploader_a_
-                {
-                    $field.field
-                }
-            .
-                on('uploadSuccess', function (file, ret) {
-                    if (0 == ret.code) {
-                        // 上传成功
-                        $("#show_{$field.field}_dialog_name").html(ret.data.field);
-                        if (ret.data.duration) {
-                            $("#singel_file_{$field.field}_size").html(ret.data.size + '，约' + (ret.data.duration / 60).toFixed(1) + '分钟');
-                        } else {
-                            $("#singel_file_{$field.field}_size").html(ret.data.size);
-                        }
-                        $("#show_{$field.field}_dialog").show();
-                        $("#singel_file_{$field.field}").val(ret.data.id);
-                    } else {
-                        // 上传错误或失败
-                        $(this).alertmsg('error', ret.message);
-                    }
-                });
-                uploader_a_
-                {
-                    $field.field
-                }
-            .
-                on('uploadProgress', function (file, percentage) {
-                    $("#picker{$field.field}_progress").show().html('上传进度' + (percentage * 100).toFixed(1) + '%');
-                    if (1 == percentage) {
-                        $("#picker{$field.field}_progress").hide();
-                    }
-                });
-                // 文件上传出错。
-                uploader_a_
-                {
-                    $field.field
-                }
-            .
-                on('error', function (type) {
-                    if (type == 'Q_EXCEED_SIZE_LIMIT') {
-                        $(this).alertmsg('error', '文件大小超过限制');
-                    }
-                    if (type == 'Q_TYPE_DENIED') {
-                        $(this).alertmsg('error', '不符合的文件类型');
-                    }
-                });
-                // 文件上传失败，显示上传出错。
-                /*uploader.on( 'uploadError', function( file ) {
+            layui.use(['admin', 'upload'], function () {
+                var $ = layui.jquery
+                    , upload = layui.upload;
 
-                    $(this).alertmsg('error', '');
-                });*/
+                //普通图片上传
+                var uploadInst = upload.render({
+                    elem: '#button-upload-normal-file-{$field.field}'
+                     ,accept: 'file' //普通文件
+                    //  ,exts: 'zip|rar|7z' //只允许上传压缩文件
+                    //   ,size: 60 //限制文件大小，单位 KB
+                    , url: "{:\\think\\facade\\Url::build('file/Attachment/upload')}"
+                    , before: function (obj) {
+                        //预读本地文件示例，不支持ie8
+                    }
+                    , done: function (res) {
+                        //如果上传失败
+                        if (res.code > 0) {
+                            return layer.msg(res.message);
+                        } else {
+                            //上传成功
+                            $("#show-upload-normal-file-{$field.field}").html('' +
+                                '  文件大小：'+res.data.size +'\n' +
+                                '            <input type="hidden" id=\'singel_file_{$field.field}\' name="{$field.field}" value="'+res.data.id+'">' +
+                                '');
+                            $("[name='{$field.field}']").val(res.data.id);
+                        }
+                    }
+                    , error: function () {
+                        //演示失败状态，并实现重传
+                        var demoText = $('#test-upload-demoText');
+                        demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-mini demo-reload">重试</a>');
+                        demoText.find('.demo-reload').on('click', function () {
+                            uploadInst.upload();
+                        });
+                    }
+                });
 
             });
         </script>
 
     </div>
-    <div class="col-md-3" style='display: none'>
 
-        <a href="{:\\think\\facade\\Url::build('admin/Attachment/upload',['file_limit'=>1,'callback'=>'singel_file_'.{$field.field}])}"
-           style="margin: auto;"
-           class="btn btn-primary btn-lg" role="button" data-toggle="dialog" data-mask='true' data-width='1200'
-           data-height='800'
-           data-id="singel_file_{$field.field}_dialog" data-icon='copy'>附件列表</a>
-
-        <!-- 文件大小<code>0</code>b -->
-        <script type="text/javascript">
-            function singel_file_ {
-                $field.field
-            }
-
-            (obj)
-            {
-                var flag = false;
-                $("input[name='upload_ids']").each(function () {
-                    var id = $(this).val();
-                    $.ajax({
-                        type: "GET",
-                        url: "{:\\think\\facade\\Url::build('admin/Attachment/getInfo')}",
-                        data: {id: id},
-                        //返回数据的格式
-                        datatype: "json",
-                        //成功返回之后调用的函数
-                        success: function (data) {
-                            if (0 == data.code) {
-                                $("#singel_file_{$field.field}_name").val(data.info.field);
-                                $("#singel_file_{$field.field}").val(data.info.id);
-                                $("#singel_file_{$field.field}_size").html(data.info.size);
-                            } else {
-                                $(this).alertmsg('error', data.error);
-                            }
-                        },
-                        //调用出错执行的函数
-                        error: function () {
-                            //请求出错处理
-                            $(this).alertmsg('error', "{:\\think\\facade\\Lang::get('error ajax http request')}")
-                        }
-                    });
-
-                    flag = true;
-                })
-                if (flag) {
-                    $(this).dialog('close', 'singel_file_{$field.field}_dialog');
-                } else {
-                    $(this).alertmsg('error', '您未选择需要操作的文件');
-                }
-            }
-        </script>
-    </div>
-</div>
 
 </div>{/case}
 {case value='showImg'}

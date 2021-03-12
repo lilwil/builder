@@ -9,6 +9,7 @@
 	namespace yicmf\builder;
 
 	use app\admin\model\Menu as MenuModel;
+	use Overtrue\Pinyin\Pinyin;
 	use think\Db;
 	use think\Exception;
 	use think\exception\ValidateException;
@@ -212,7 +213,6 @@
 		 * @param null $tips
 		 * @param int $wait_time
 		 * @return $this
-		 * @throws Exception
 		 * @author 微尘 <yicmf@qq.com>
 		 * @datetime: 2020/5/29 21:36
 		 */
@@ -320,7 +320,7 @@
 		 * @param array|null $verify
 		 * @return $this
 		 */
-		public function keySex($field, $title = '性别', $tips = null, $default = 0, $verify = null)
+		public function keySex($field = 'sex', $title = '性别', $tips = null, $default = 0, $verify = null)
 		{
 			$options = [
 				2 => '女',
@@ -343,9 +343,9 @@
 		 * @param null $verify
 		 * @return $this
 		 */
-		public function keyBelongsToMany($field, $title, $column, $tips = null, $size = 20, $verify = null)
+		public function keyBelongsToMany($field, $title, $column, $tips = null, $default = null, $size = null, $verify = null)
 		{
-			return $this->key($field, $title, $tips, 'belongsToMany', ['column' => $column, 'field' => $field, 'limit' => 0], $size, $verify);
+			return $this->key($field, $title, $tips, 'belongsToMany', ['column' => $column, 'field' => $field, 'limit' => 0], $default, $verify, $size);
 		}
 
 		/**
@@ -360,9 +360,9 @@
 		 * @param null $verify
 		 * @return $this
 		 */
-		public function keyBelongTo($field, $url, $title, $tips = null, $size = 20, $verify = null)
+		public function keyBelongTo($field, $url, $title, $tips = null, $default = null, $size = null, $verify = null)
 		{
-			return $this->key($field, $title, $tips, 'belongTo', ['url' => $url, 'field' => $field, 'limit' => 0], $size, $verify);
+			return $this->key($field, $title, $tips, 'belongTo', ['url' => $url, 'field' => $field, 'limit' => 0], $default, $verify, $size);
 		}
 
 		/**
@@ -385,7 +385,7 @@
 		 * 下拉列表多选.
 		 * @param string $field
 		 * @param string $title
-		 * @param array $options
+		 * @param array|Closure $options
 		 * @param string|null $tips
 		 * @param bool $multiple 是否开启多项选择
 		 * @param array|null $verify
@@ -512,17 +512,17 @@
 
 		/**
 		 * 闭包函数
-		 * @param      $field
 		 * @param      $title
-		 * @param      $closure
+		 * @param Closure $closure
 		 * @param null $tips
 		 * @return $this
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/4/6 13:18
 		 */
-		public function keyClosure($field, $title, $closure, $tips = null)
+		public function keyClosure($title, $closure, $tips = null)
 		{
-			return $this->key($field, text($title), $tips, $closure);
+			$pinyin = new Pinyin();
+			return $this->key($pinyin->permalink($title, '_'), text($title), $tips, $closure);
 		}
 
 		/**
@@ -537,18 +537,6 @@
 			return $this->key($field, $title, $tips, 'password', null, $default);
 		}
 
-		/**
-		 * 实名认证
-		 * @param string $field
-		 * @param string $title
-		 * @param string|null $tips
-		 * @return $this
-		 */
-		public function keyAuth($field, $title = '实名认证', $tips = null, $need_hand = 1)
-		{
-			$options['need_hand'] = $need_hand ? $need_hand : 0;
-			return $this->key($field, $title, $tips, 'auth', $options);
-		}
 
 		/**
 		 * 输入url地址
@@ -675,6 +663,20 @@
 		}
 
 		/**
+		 * 要求验证填写数字.
+		 * @param string $field
+		 * @param string $title
+		 * @param string $tips
+		 * @param number $size
+		 * @param array|null $verify
+		 * @return $this
+		 */
+		public function keyTimeCycle($field, $title, $tips = null, $default = '', $verify = null)
+		{
+			return $this->key($field, $title, $tips, 'time_cycle', null, $default, $verify);
+		}
+
+		/**
 		 * 邮箱.
 		 * @return $this
 		 */
@@ -691,7 +693,6 @@
 		 * @param string|null $tips
 		 * @param string|null $default
 		 * @return $this
-		 * @throws Exception
 		 * @author 微尘 <yicmf@qq.com>
 		 * @datetime: 2020/5/29 21:39
 		 */
@@ -979,14 +980,62 @@
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/5/8 11:58
 		 */
-		public function keyMultipleImage($field, $title, $tips = null, $default = null, $limit = 5, $verify = null)
+		public function keyImageMultiple($field, $title, $tips = null, $default = null, $limit = 5, $verify = null)
 		{
+
 			$max_size = 0;
 			$exts = '';
 			$mimes = '';
-			return $this->key($field, $title, $tips, 'MultipleImage',
+			return $this->key($field, $title, $tips, 'ImageMultiple',
 				['limit' => $limit, 'max_size' => $max_size, 'mimes' => $mimes, 'exts' => $exts]
 				, $default, $verify);
+		}
+
+		/**
+		 * 多图片展示
+		 * @param string $field 需要保存的字段，为URL地址，且必须是以_url结尾的字符串
+		 * @param string $title
+		 * @param null $tips
+		 * @param int $limit
+		 * @param null $verify
+		 * @return $this
+		 * @author  : 微尘 <yicmf@qq.com>
+		 * @datetime: 2019/5/8 11:58
+		 */
+		public function keyImageShowMultiple($field, $title, $tips = null, $default = null, $limit = 5, $verify = null)
+		{
+
+			$max_size = 0;
+			$exts = '';
+			$mimes = '';
+			return $this->key($field, $title, $tips, 'ImageShowMultiple',
+				['limit' => $limit, 'max_size' => $max_size, 'mimes' => $mimes, 'exts' => $exts]
+				, $default, $verify);
+		}
+
+		/**
+		 * 实名认证
+		 * @param string $field
+		 * @param string $title
+		 * @param string|null $tips
+		 * @return $this
+		 */
+		public function keyImageGroup($field, $title = '', $tips = null, $need_hand = 1)
+		{
+			return $this->key($field, $title, $tips, 'image_group', $options);
+		}
+
+		/**
+		 * 实名认证
+		 * @param string $field
+		 * @param string $title
+		 * @param string|null $tips
+		 * @return $this
+		 */
+		public function keyAuth($field, $title = '实名认证', $tips = null, $need_hand = 1)
+		{
+			$options['need_hand'] = $need_hand ? $need_hand : 0;
+			return $this->key($field, $title, $tips, 'auth', $options);
 		}
 
 		/**
@@ -1307,72 +1356,98 @@
 		 */
 		public function fetch($template = '', $vars = [], $config = [])
 		{
-			// 将数据融入到key中
-			$this->_formatData();
-			// 配置触发
-			$this->_formatTrigger();
-			// 显示页面
-			$this->assign('group', $this->_group);
-			// 查询当前菜单
-			$menu = MenuModel::where('status', 1)
-				->where('action', $this->request->action())
-				->where('controller', $this->request->controller())
-				->where('module', $this->request->module())
-				->find();
-			if ($menu && !$this->_title) {
-				$this->_title = $menu['title'];
-			}
-			if ($menu['group']) {
-				$this->assign('menu_group_title', $menu['group']);
-			}
-			if ($menu['pid']) {
-				$p_menu = MenuModel::where('status', 1)
-					->where('id', $menu['pid'])
-					->find();
-				$this->assign('p_menu_title', $p_menu['title']);
+			if ($this->request->has('ajax')) {
+				$field = $this->request->param('ajax');
+				$key;
+				foreach ($this->_keyList as $item) {
+					if ($item['field'] == $field) {
+						$key = $item;
+						break;
+					}
+				}
+
+				if ($key['options'] instanceof \Closure) {
+					// 闭包
+					$result = $key['options']($this->_data, $key);
+
+				} else {
+					$result = $key['options'];
+				}
+				dump($result);
+
+				exit();
+				$result = [];
+				return json($result);
 			} else {
-				$this->assign('p_menu_title', $menu['title']);
-			}
-			// 显示页面
-			$this->assign('menu_title', $this->_title);
-			$this->assign('templets', $this->_templets);
-			//            if ($this->request->has('auto_builder', 'get')) {
-			//                $this->assign('filter', $this->request->get('auto_builder'));
-			//                $this->assign('auto_builder', 1);
-			//            } else {
-			$this->assign('filter', $this->request->module() . '-' . $this->request->controller() . '-' . $this->request->action());
-			//            }
-			if (count($this->_keyList)) {
-				$this->assign('keyList', $this->_keyList);
-			}
-			//            dump($this->_keyList);
-			if ($this->_form_submit) {
-				$this->assign('form_submit', $this->_form_submit);
-			}
-			if ($this->_form_reset) {
-				$this->assign('form_reset', $this->_form_reset);
-			}
-			if ($this->_form_close) {
-				$this->assign('form_close', $this->_form_close);
-			}
-			// 在有赋值的情况展示
-			if (count($this->_explaints) > 0) {
-				$this->assign('explaints', $this->_explaints);
-			}
-			if (!$this->_savePostUrl) {
-				$this->_savePostUrl = Url::build();
-			};
+				// 将数据融入到key中
+				$this->_formatData();
+				// 配置触发
+				$this->_formatTrigger();
+				// 显示页面
+				$this->assign('group', $this->_group);
+				// 查询当前菜单
+				$menu = MenuModel::where('status', 1)
+					->where('action', $this->request->action())
+					->where('controller', $this->request->controller())
+					->where('module', $this->request->module())
+					->find();
+				if ($menu && !$this->_title) {
+					$this->_title = $menu['title'];
+				}
+				if ($menu['group']) {
+					$this->assign('menu_group_title', $menu['group']);
+				}
+				if ($menu['pid']) {
+					$p_menu = MenuModel::where('status', 1)
+						->where('id', $menu['pid'])
+						->find();
+					$this->assign('p_menu_title', $p_menu['title']);
+				} else {
+					$this->assign('p_menu_title', $menu['title']);
+				}
+				// 显示页面
+				$this->assign('menu_title', $this->_title);
+				$this->assign('templets', $this->_templets);
+				//            if ($this->request->has('auto_builder', 'get')) {
+				//                $this->assign('filter', $this->request->get('auto_builder'));
+				//                $this->assign('auto_builder', 1);
+				//            } else {
+				$this->assign('filter', $this->request->module() . '-' . $this->request->controller() . '-' . $this->request->action());
+				//            }
+				if (count($this->_keyList)) {
+					$this->assign('keyList', $this->_keyList);
+				}
+				//            dump($this->_keyList);
+				if ($this->_form_submit) {
+					$this->assign('form_submit', $this->_form_submit);
+				}
+				if ($this->_form_reset) {
+					$this->assign('form_reset', $this->_form_reset);
+				}
+				if ($this->_form_close) {
+					$this->assign('form_close', $this->_form_close);
+				}
+				// 在有赋值的情况展示
+				if (count($this->_explaints) > 0) {
+					$this->assign('explaints', $this->_explaints);
+				}
+				if (!$this->_savePostUrl) {
+					$this->_savePostUrl = Url::build();
+				};
 
-			if (strpos($this->_savePostUrl, '/Admin')) {
-				$this->_savePostUrl = str_replace('/Admin', '/admin', $this->_savePostUrl);
+				if (strpos($this->_savePostUrl, '/Admin')) {
+					$this->_savePostUrl = str_replace('/Admin', '/admin', $this->_savePostUrl);
+				}
+
+				$this->assign('savePostUrl', $this->_savePostUrl);
+				$this->assign('triggers', $this->_triggers);
+				$this->assign('uniqid', uniqid());
+				//            dump($this->_triggers);
+				$this->assign('reload', $this->_reload);
+				$this->assign('mask', $this->_mask);
+				return parent::_fetch('edit', $vars, $config);
 			}
 
-			$this->assign('savePostUrl', $this->_savePostUrl);
-			$this->assign('triggers', $this->_triggers);
-			//            dump($this->_triggers);
-			$this->assign('reload', $this->_reload);
-			$this->assign('mask', $this->_mask);
-			return parent::_fetch('edit', $vars, $config);
 		}
 
 		/**
