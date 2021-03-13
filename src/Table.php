@@ -1383,21 +1383,14 @@ EOF;
 EOF;
 			return $this->key($field, $title, false, $width, 'normal', '', '#' . $templet);
 		}
-
-		//
-		//        public function keyDialog($title, $url, $arr = null)
-		//        {
-		//            $arr['class'] = 'layui-bg-green btn';
-		//            $arr['data-id'] = 'id' . md5('dialog-' . $this->request->controller() . '-defalut-' . $this->request->time());
-		//            $arr['icon'] = isset($arr['icon']) ? $arr['icon'] : 'plus';
-		//            $arr['toggle'] = 'dialog';
-		//            $arr['width'] = isset($arr['width']) ? $arr['width'] : $this->dialog_width_default;
-		//            $arr['height'] = isset($arr['height']) ? $arr['height'] : $this->dialog_height_default;
-		//            $arr['url'] = $url;
-		//            // 添加key
-		//            return $this->key(null, $title, 'dialog', $arr);
-		//        }
-		public function keyStatus($field = 'status', $title = '状态', $map = null, $sort = false, $style = '')
+		/**
+		 * 状态
+		 * @param null $map
+		 * @param false $sort
+		 * @param string $style
+		 * @return $this
+		 */
+		public function keyStatus($map = null, $sort = false, $style = '')
 		{
 			$templet_name = uniqid();
 			$map = !is_null($map) ? $map : [
@@ -1407,7 +1400,7 @@ EOF;
 				0 => '未审核',
 				2 => '推荐',
 			];
-			return $this->keyMap($field, $title, $map, $sort, '', $style);
+			return $this->keyMap('status', '状态', $map, $sort, '', $style);
 		}
 
 		public function keyDoAction($url, $title = '操作', $attr = [], $status = [], $event = 'edit')
