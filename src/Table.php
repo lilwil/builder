@@ -294,6 +294,7 @@
 			$this->_suggest = $suggest;
 			return $this;
 		}
+
 		/**
 		 * 统计信息
 		 * @param $suggest
@@ -301,11 +302,11 @@
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/3/28 13:34
 		 */
-		public function statistics($title,$count)
+		public function statistics($title, $count)
 		{
 			$this->_statistics[] = [
-				'title'=>$title,
-				'count'=>$count
+				'title' => $title,
+				'count' => $count
 			];
 			return $this;
 		}
@@ -392,7 +393,7 @@
 		 * @param array $attr
 		 * @return Table
 		 */
-		public function buttonNew($url, $title = '新增', $width = '', $height = '', $attr = [])
+		public function buttonNew($url='update', $title = '新增', $width = '', $height = '', $attr = [])
 		{
 			$default['url'] = $url;
 			$default['class'] = 'layui-bg-green';
@@ -739,14 +740,12 @@
 		 */
 		public function searchTime($field, $title, $value = null, $attr = [])
 		{
-			if (is_string($value))
-			{
-				if (time_format($value) < time_format('now'))
-				{
-					$value =time_format($value) .' - '.time_format('now');
-				}else{
+			if (is_string($value)) {
+				if (time_format($value) < time_format('now')) {
+					$value = time_format($value) . ' - ' . time_format('now');
+				} else {
 
-					$value = time_format('now').' - '.time_format($value);
+					$value = time_format('now') . ' - ' . time_format($value);
 				}
 			}
 			$this->_search[] = [
@@ -758,6 +757,34 @@
 				'value' => $value,
 			];
 			return $this;
+		}
+
+		/**
+		 * 选择搜索
+		 * @param        $field
+		 * @param        $title
+		 * @param int $default
+		 * @param array $options
+		 * @param string $des
+		 * @param array $attr
+		 * @return $this
+		 * @author  : 微尘 <yicmf@qq.com>
+		 * @datetime: 2019/5/8 13:15
+		 */
+		public function searchBool($field, $title,  $default = '', $des = '', $attr = [])
+		{
+			$options = [
+				[
+					'id' => 0,
+					'value' => '否',
+				],
+				[
+					'id' => 1,
+					'value' => '是',
+				],
+			];
+
+			return $this->searchSelect($field, $title, $options, $default , $des, $attr );
 		}
 
 		/**
@@ -1383,6 +1410,7 @@ EOF;
 EOF;
 			return $this->key($field, $title, false, $width, 'normal', '', '#' . $templet);
 		}
+
 		/**
 		 * 状态
 		 * @param null $map
@@ -1465,7 +1493,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status);
 		}
 
-		public function keyDoActionEdit($url, $title = '编辑', $status = [], $attrs = [])
+		public function keyDoActionEdit($url='update?id={$id}', $title = '编辑', $status = [], $attrs = [])
 		{
 			$attr['class'] = 'layui-bg-green';
 			$attr['toggle'] = $this->toggle;
@@ -1523,7 +1551,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status);
 		}
 
-		public function keyDoActionView($url, $title = '查看详情', $status = [], $attrs = [])
+		public function keyDoActionView($url = 'view?id={$id}', $title = '查看详情', $status = [], $attrs = [])
 		{
 			$attr['class'] = 'layui-bg-green';
 			$attr['toggle'] = 'dialog';
@@ -1540,7 +1568,7 @@ EOF;
 			return $this->keyDoAction($url, $title, array_merge($attr, $attrs), $status);
 		}
 
-		public function keyDoActionManager($url, $title = '授权', $status = [], $attr = [])
+		public function keyDoActionManager($url = 'manager?id={$id}', $title = '授权', $status = [], $attr = [])
 		{
 			$attr['class'] = 'layui-bg-green';
 			$attr['toggle'] = $this->toggle;
@@ -1572,7 +1600,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status);
 		}
 
-		public function keyDoActionDel($url, $title = '删除', $status = [], $attr = [])
+		public function keyDoActionDel($url = 'delete?id={$id}', $title = '删除', $status = [], $attr = [])
 		{
 			$attr['class'] = 'layui-btn-danger';
 			$attr['toggle'] = 'doajax';
@@ -1587,7 +1615,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status, 'ajax');
 		}
 
-		public function keyDoActionClear($url, $title = '彻底删除', $status = [], $attr = [])
+		public function keyDoActionClear($url = 'clear?id={$id}', $title = '彻底删除', $status = [], $attr = [])
 		{
 			$attr['class'] = 'btn-red';
 			$attr['toggle'] = 'doajax';
@@ -1609,7 +1637,7 @@ EOF;
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/4/12 16:16
 		 */
-		public function keyDoActionForbid($url, $title = '禁用', $status = [], $attr = [])
+		public function keyDoActionForbid($url = 'forbid?id={$id}', $title = '禁用', $status = [], $attr = [])
 		{
 			$attr['class'] = 'layui-btn-danger';
 			$attr['toggle'] = 'doajax';
@@ -1622,7 +1650,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status, 'ajax');
 		}
 
-		public function keyDoActionToCheck($url, $title = '通过审核', $status = [], $attr = [])
+		public function keyDoActionToCheck($url = 'check?id={$id}', $title = '通过审核', $status = [], $attr = [])
 		{
 			$attr['class'] = 'layui-bg-green';
 			$attr['icon'] = 'ok';
@@ -1643,7 +1671,7 @@ EOF;
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/4/12 18:19
 		 */
-		public function keyDoActionRestore($url, $title = '还原', $status = [], $attr = [])
+		public function keyDoActionRestore($url = 'restore?id={$id}', $title = '还原', $status = [], $attr = [])
 		{
 			$attr['class'] = 'btn-red';
 			$attr['toggle'] = 'doajax';
