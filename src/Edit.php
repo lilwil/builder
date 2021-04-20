@@ -423,7 +423,7 @@
 		 * @param array|null $verify
 		 * @return $this
 		 */
-		public function keyStatus($field = 'status', $title = '状态', $options = null, $tips = null, $default = '', $verify = null)
+		public function keyStatus($options = null, $tips = null, $default = '', $verify = null)
 		{
 			$options = $options ?: [
 				-2 => '删除',
@@ -432,7 +432,7 @@
 				0 => '未审核',
 				2 => '推荐',
 			];
-			return $this->keySelect($field, $title, $options, $tips, $default, $verify);
+			return $this->keySelect('status', '状态', $options, $tips, $default, $verify);
 		}
 
 		/**

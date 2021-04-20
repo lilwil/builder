@@ -393,7 +393,7 @@
 		 * @param array $attr
 		 * @return Table
 		 */
-		public function buttonNew($url='update', $title = '新增', $width = '', $height = '', $attr = [])
+		public function buttonNew($url = 'update', $title = '新增', $width = '', $height = '', $attr = [])
 		{
 			$default['url'] = $url;
 			$default['class'] = 'layui-bg-green';
@@ -738,14 +738,16 @@
 		 * @param array $attr
 		 * @return $this
 		 */
-		public function searchTime($field, $title, $value = null, $attr = [])
+		public function searchTime($field, $title, $value = null, $attr = [], $width = 300)
 		{
 			if (is_string($value)) {
-				if (time_format($value) < time_format('now')) {
-					$value = time_format($value) . ' - ' . time_format('now');
-				} else {
+				if (!strpos($value, ' - ')) {
+					if (time_format($value) < time_format('now')) {
+						$value = time_format($value) . ' - ' . time_format('now');
+					} else {
 
-					$value = time_format('now') . ' - ' . time_format($value);
+						$value = time_format('now') . ' - ' . time_format($value);
+					}
 				}
 			}
 			$this->_search[] = [
@@ -755,6 +757,7 @@
 				'condition' => 'between',
 				'attr' => $attr,
 				'value' => $value,
+				'width' => $width,
 			];
 			return $this;
 		}
@@ -771,7 +774,7 @@
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/5/8 13:15
 		 */
-		public function searchBool($field, $title,  $default = '', $des = '', $attr = [])
+		public function searchBool($field, $title, $default = '', $des = '', $attr = [])
 		{
 			$options = [
 				[
@@ -784,7 +787,7 @@
 				],
 			];
 
-			return $this->searchSelect($field, $title, $options, $default , $des, $attr );
+			return $this->searchSelect($field, $title, $options, $default, $des, $attr);
 		}
 
 		/**
@@ -1493,7 +1496,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status);
 		}
 
-		public function keyDoActionEdit($url='update?id={$id}', $title = '编辑', $status = [], $attrs = [])
+		public function keyDoActionEdit($url = 'update?id={$id}', $title = '编辑', $status = [], $attrs = [])
 		{
 			$attr['class'] = 'layui-bg-green';
 			$attr['toggle'] = $this->toggle;
