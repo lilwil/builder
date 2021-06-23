@@ -19,7 +19,7 @@
 
 	class Edit extends Builder
 	{
-		private $_title;
+		private $_title = '';
 
 
 		private $_keyList = [];
@@ -36,10 +36,11 @@
 		private $_form_submit;
 		private $_form_close;
 		private $_form_reset;
+		private $_form_buttons;
 
 		private $_reload = 'true';
 		private $_mask = 'true';
-		private $_savePostUrl;
+
 
 		private $_group = [];
 
@@ -59,6 +60,18 @@
 		 */
 		protected $batchValidate = false;
 
+		protected $_namespace;
+
+		protected function initialize()
+		{
+
+			// 命名空间
+			$this->_namespace = $this->request->module() . '_' . str_replace('.', '_', $this->request->controller())
+				. '_' . $this->request->action() . '_'
+				. md5(json_encode($this->request->except('v,user')));
+			//                .implode('_',$this->request->except('v'));
+		}
+
 		/**
 		 * 设置请求表单头
 		 * @param string $title
@@ -69,6 +82,14 @@
 			$this->_mask = $mask;
 			$this->_reload = $reload;
 			return $this;
+		}
+
+		/**
+		 * 获取命名空间
+		 */
+		public function getNamespace()
+		{
+			return $this->_namespace;
 		}
 
 		/**
@@ -102,23 +123,33 @@
 		/**
 		 * 设置触发.
 		 * @param string|array $trigger 需要触发的表单项名，目前支持select（单选类型）、text、radio三种
-		 * @param string $values 触发的值
-		 * @param string $show 触发后要显示的表单项名，目前不支持普通联动、范围、拖动排序、静态文本
+		 * @param string|array $value 触发的值 单一
+		 * @param string|array $shows 触发后要显示的表单项名，目前不支持普通联动、范围、拖动排序、静态文本
+		 * @param string $tpl 执行的js方法
 		 * @return $this
 		 */
-		public function setTrigger($trigger, $values = '', $show = '')
+		public function setTrigger($trigger, $value = '', $shows = '', $tpl = '')
 		{
 			if (is_array($trigger)) {
 				$this->_triggers = array_merge($this->_triggers, $trigger);
 			} else {
-				$this->_triggers[$trigger][] = ['value' => $values, 'show' => $show];
-				//参与的所有字段合集
-				//                if (isset($this->_triggers[$trigger]['field'])) {
-				//                    $this->_triggers[$trigger]['field'] .= ',' . $show;
-				//                } else {
-				//                    $this->_triggers[$trigger]['field'] = $show;
-				//                }
+				if (!is_array($value) && strpos($value, ',')) {
+					$value = explode(',', $value);
+				} elseif (!is_array($value) && (is_numeric($value) || is_string($value))) {
+					$value = [$value];
+				} elseif (is_array($value) && empty($value)) {
+					$value = [''];
+				}
+				foreach ($value as $item) {
+					$this->_triggers[$trigger][] = ['value' => $item, 'show' => $shows, 'tpl' => $tpl];
+				}
 			}
+			//参与的所有字段合集
+			//                if (isset($this->_triggers[$trigger]['field'])) {
+			//                    $this->_triggers[$trigger]['field'] .= ',' . $show;
+			//                } else {
+			//                    $this->_triggers[$trigger]['field'] = $show;
+			//
 			return $this;
 		}
 
@@ -160,6 +191,20 @@
 		public function keyReadOnly($name, $title, $tips = null)
 		{
 			return $this->key($name, $title, $tips, 'readonly');
+		}
+
+		/**
+		 * 只读文本.
+		 * @param string $name
+		 * @param string $title
+		 * @param string|null $tips
+		 * @return $this
+		 * @author  : 微尘 <yicmf@qq.com>
+		 * @datetime: 2019/4/12 11:31
+		 */
+		public function keyCopy($name, $title, $tips = null)
+		{
+			return $this->key($name, $title, $tips, 'copy');
 		}
 
 		/**
@@ -444,9 +489,9 @@
 		 * @param array|null $verify
 		 * @return $this
 		 */
-		public function keyCheckBox($field, $title, $options, $tips = null, $verify = null)
+		public function keyCheckBox($field, $title, $options, $tips = null, $default = [], $verify = null)
 		{
-			return $this->key($field, $title, $tips, 'checkbox', $options, 30, $verify);
+			return $this->key($field, $title, $tips, 'checkbox', $options, $default, $verify);
 		}
 
 //		/**
@@ -547,9 +592,8 @@
 		 * @param array|null $verify
 		 * @return $this
 		 */
-		public function keyUrl($field, $title, $tips = null, $default = '', $size = 50, $verify = '')
+		public function keyUrl($field, $title, $tips = '需要以http或者https开头', $default = '', $size = 50, $verify = '')
 		{
-			$tips = empty($tips) ? '需要以http或者https开头' : $tips;
 			return $this->key($field, $title, $tips, 'url', null, $default, $verify ? ($verify . '|url') : 'url', $size);
 		}
 
@@ -754,7 +798,7 @@
 		 * @param array $style
 		 * @return $this
 		 */
-		public function keyEditor($field, $title, $tips = null, $default = '', $config = [], $style = ['width' => '500px', 'height' => '400px'])
+		public function keyEditor($field, $title, $tips = null, $default = '', $config = [], $style = ['width' => '900', 'height' => '400'])
 		{
 			$items =
 				[
@@ -1020,7 +1064,7 @@
 		 * @param string|null $tips
 		 * @return $this
 		 */
-		public function keyImageGroup($field, $title = '', $tips = null, $need_hand = 1)
+		public function keyImageGroup($field, $title = '', $tips = null, $options = [])
 		{
 			return $this->key($field, $title, $tips, 'image_group', $options);
 		}
@@ -1097,7 +1141,8 @@
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/4/12 10:35
 		 */
-		protected function key($field, $title, $tips, $type, $options = null, $default = '', $verify = null, $size = null, $disabled = null, $placeholder = '')
+		protected
+		function key($field, $title, $tips, $type, $options = null, $default = '', $verify = null, $size = null, $disabled = null, $placeholder = '')
 		{
 			if (is_array($verify)) {
 				$verify = implode($verify, '|');
@@ -1148,20 +1193,6 @@
 			return $this;
 		}
 
-		/**
-		 * 按钮基础调用，一般内部使用.
-		 * @param string $title
-		 * @param array $attr
-		 * @return $this
-		 */
-		public function button($title, $attr = [])
-		{
-			$this->_buttonList[] = [
-				'title' => $title,
-				'attr' => $attr,
-			];
-			return $this;
-		}
 
 		/**
 		 * 提交按钮.
@@ -1171,15 +1202,55 @@
 		 */
 		public function buttonSubmit($url = null, $title = '保存')
 		{
-			if (!is_null($url)) {
-				$this->savePostUrl($url);
+
+			if (is_null($url)) {
+				$url = Url::build();
+			} else {
+				$url = Url::build($url);
+			}
+			if (strpos($url, '/Admin')) {
+				$url = str_replace('/Admin', '/admin', $url);
 			}
 			$attr = [
 				'class' => 'layui-btn',
 				'lay-filter' => "LAY-app-workorder-submit",
 				'lay-submit' => '',
 			];
-			$this->_form_submit = ['attr' => $attr, 'url' => $url, 'icon' => 'save', 'title' => $title];
+			$this->_form_buttons[] = ['attr' => $attr, 'url' => $url, 'type' => 'submit', 'icon' => 'save', 'title' => $title];
+			return $this;
+		}
+
+		/**
+		 * 提交按钮.
+		 * @param string $url 提交的url地址，默认当前页
+		 * @param string $title
+		 * @return $this
+		 */
+		public function button($url = null, $title = '保存')
+		{
+			$attr = [
+				'class' => 'layui-btn',
+				'lay-filter' => "LAY-app-workorder-submit",
+				'lay-submit' => '',
+			];
+			$this->_form_buttons[] = ['attr' => $attr, 'url' => $url, 'type' => 'button', 'icon' => 'save', 'title' => $title];
+			return $this;
+		}
+
+		/**
+		 * 提交按钮.
+		 * @param string $function 提交的url地址，默认当前页
+		 * @param string $title
+		 * @return $this
+		 */
+		public function buttonClick($click = null, $title = '保存')
+		{
+			$attr = [
+				'class' => 'layui-btn',
+				'lay-filter' => "LAY-app-workorder-submit",
+				'lay-submit' => '',
+			];
+			$this->_form_buttons[] = ['attr' => $attr, 'url' => '', 'click' => $click, 'type' => 'button', 'icon' => 'save', 'title' => $title];
 			return $this;
 		}
 
@@ -1190,11 +1261,10 @@
 		 */
 		public function buttonReset($title = '重新填写')
 		{
-			$attr = [];
 			$attr = [
 				'class' => 'layui-btn',
 			];
-			$this->_form_reset = ['attr' => $attr, 'icon' => 'close', 'title' => $title];
+			$this->_form_buttons[] = ['attr' => $attr, 'type' => 'reset', 'icon' => 'close', 'title' => $title];
 			return $this;
 		}
 
@@ -1205,11 +1275,10 @@
 		 */
 		public function buttonClose($title = '关闭')
 		{
-			$attr = [];
 			$attr = [
 				'class' => 'layui-btn',
 			];
-			$this->_form_close = ['attr' => $attr, 'icon' => 'close', 'title' => $title];
+			$this->_form_buttons[] = ['attr' => $attr, 'type' => 'close', 'icon' => 'close', 'title' => $title];
 			return $this;
 		}
 
@@ -1270,15 +1339,6 @@
 			return $this;
 		}
 
-		/**
-		 * 当前表单提交的地址
-		 * @param array $data
-		 * @return $this
-		 */
-		public function savePostUrl($url)
-		{
-			$this->_savePostUrl = Url::build($url);
-		}
 
 		/**
 		 * input和下拉选择组合
@@ -1369,14 +1429,9 @@
 				if ($key['options'] instanceof \Closure) {
 					// 闭包
 					$result = $key['options']($this->_data, $key);
-
 				} else {
 					$result = $key['options'];
 				}
-				dump($result);
-
-				exit();
-				$result = [];
 				return json($result);
 			} else {
 				// 将数据融入到key中
@@ -1391,7 +1446,7 @@
 					->where('controller', $this->request->controller())
 					->where('module', $this->request->module())
 					->find();
-				if ($menu && !$this->_title) {
+				if ($menu && '' === $this->_title) {
 					$this->_title = $menu['title'];
 				}
 				if ($menu['group']) {
@@ -1406,7 +1461,10 @@
 					$this->assign('p_menu_title', $menu['title']);
 				}
 				// 显示页面
-				$this->assign('menu_title', $this->_title);
+				if (false !== $this->_title) {
+					$this->assign('menu_title', $this->_title);
+				}
+
 				$this->assign('templets', $this->_templets);
 				//            if ($this->request->has('auto_builder', 'get')) {
 				//                $this->assign('filter', $this->request->get('auto_builder'));
@@ -1417,34 +1475,17 @@
 				if (count($this->_keyList)) {
 					$this->assign('keyList', $this->_keyList);
 				}
-				//            dump($this->_keyList);
-				if ($this->_form_submit) {
-					$this->assign('form_submit', $this->_form_submit);
-				}
-				if ($this->_form_reset) {
-					$this->assign('form_reset', $this->_form_reset);
-				}
-				if ($this->_form_close) {
-					$this->assign('form_close', $this->_form_close);
-				}
+				$this->assign('form_buttons', $this->_form_buttons);
 				// 在有赋值的情况展示
 				if (count($this->_explaints) > 0) {
 					$this->assign('explaints', $this->_explaints);
 				}
-				if (!$this->_savePostUrl) {
-					$this->_savePostUrl = Url::build();
-				};
-
-				if (strpos($this->_savePostUrl, '/Admin')) {
-					$this->_savePostUrl = str_replace('/Admin', '/admin', $this->_savePostUrl);
-				}
-
-				$this->assign('savePostUrl', $this->_savePostUrl);
 				$this->assign('triggers', $this->_triggers);
 				$this->assign('uniqid', uniqid());
-				//            dump($this->_triggers);
+//				            dump($this->_triggers);
 				$this->assign('reload', $this->_reload);
 				$this->assign('mask', $this->_mask);
+				$this->assign('name_space', $this->_namespace);
 				return parent::_fetch('edit', $vars, $config);
 			}
 
@@ -1453,43 +1494,118 @@
 		/**
 		 * 规范触发数据格式.
 		 */
-		private function _formatTrigger()
+		private
+		function _formatTrigger()
 		{
 			//TODO:考虑在没有配置当前字段默认值的情况，目前设计为不显示
-			foreach ($this->_triggers as $field => &$trigger) {
-				$fields = [];
-				foreach ($trigger as $key => $trigger_detail) {
-					$shows = explode(',', $trigger_detail['show']);
-					$fields = array_merge($shows, $fields);
-				}
-				foreach ($trigger as $key => $trigger_detail) {
-					$jquery_show = [];
-					$jquery_hide = [];
-					$shows = explode(',', $trigger_detail['show']);
-					foreach ($fields as $_field) {
-						if (in_array($_field, $shows)) {
-							$jquery_show[] = $this->_jquery_md5($_field);
-						} else {
-							$jquery_hide[] = $this->_jquery_md5($_field);
-						}
-					}
-					$trigger[$key]['value'] = json_encode(explode(',', $trigger_detail['value']));
-					$trigger[$key]['show'] = json_encode($shows);
-					$trigger[$key]['jquery_show'] = implode(',', $jquery_show);
-					$trigger[$key]['jquery_hide'] = implode(',', $jquery_hide);
-					foreach ($this->_keyList as $data) {
-						if ($field == $data['field']) {
-							//当前值
-							if (in_array($data['value'], explode(',', $trigger_detail['value']))) {
-								$trigger[$key]['is_show'] = 1;
-							} else {
-								$trigger[$key]['is_show'] = 0;
-							}
-						}
+			$triggers = $this->_triggers;
+			$this->_triggers = [];
+			foreach ($triggers as $field => $trigger) {
+				$field_key = '';
+				foreach ($this->_keyList as $data) {
+					if ($field == $data['field']) {
+						$field_key = $data;
+						break;
 					}
 				}
+				$tpl = '';
+				if ($field_key['type'] == 'checkbox') {
+					$trigger = $this->_formatCheckboxTrigger($field_key, $trigger, $tpl);
+				} else {
+					$trigger = $this->_formatRadioTrigger($field_key, $trigger, $tpl);
+				}
+				$this->_triggers[] = [
+					'field' => $field_key,
+					'data' => $trigger,
+					'tpl' => $tpl,
+				];
 			}
 		}
+
+
+		/**
+		 * 规范触发数据格式.
+		 */
+		private function _formatCheckboxTrigger($field_key, $trigger, &$tpl)
+		{
+
+			$new_trigger = [];
+			$fields = [];
+			foreach ($trigger as $trigger_detail) {
+				$shows = explode(',', $trigger_detail['show']);
+				$fields = array_unique(array_merge($shows, $fields));
+
+				if ($trigger_detail['tpl']) {
+					$tpl = $trigger_detail['tpl'];
+				}
+			}
+
+			foreach ($fields as $field) {
+
+				$value = [];
+				foreach ($trigger as $trigger_detail) {
+					$shows = explode(',', $trigger_detail['show']);
+					if (in_array($field, $shows)) {
+						$value[] = $trigger_detail['value'];
+					}
+				}
+				$show = 0;
+				foreach ($value as $item) {
+					if (in_array($item, $field_key['value'])) {
+						$show = 1;
+						break;
+					}
+				}
+
+				$new_trigger[] = [
+					'field' => $field,
+					'jquery' => '#' . $this->_jquery_md5($field),
+					'value' => $value,
+					'is_show' => $show,
+				];
+			}
+			return $new_trigger;
+		}
+
+
+		/**
+		 * 规范触发数据格式.
+		 */
+		private function _formatRadioTrigger($field_key, $trigger, &$tpl)
+		{
+
+			$fields = [];
+			foreach ($trigger as $key => $trigger_detail) {
+				$shows = explode(',', $trigger_detail['show']);
+				$fields = array_merge($shows, $fields);
+			}
+			foreach ($trigger as $key => $trigger_detail) {
+				$jquery_show = [];
+				$jquery_hide = [];
+				$shows = explode(',', $trigger_detail['show']);
+				foreach ($fields as $_field) {
+					if (in_array($_field, $shows)) {
+						$jquery_show[] = '#' . $this->_jquery_md5($_field);
+					} else {
+						$jquery_hide[] = '#' . $this->_jquery_md5($_field);
+					}
+				}
+				$trigger[$key]['value'] = $trigger_detail['value'];
+				$trigger[$key]['show'] = json_encode($shows);
+				$trigger[$key]['jquery_show'] = implode(',', array_unique($jquery_show));
+				$trigger[$key]['jquery_hide'] = implode(',', array_unique($jquery_hide));
+				if ($trigger_detail['value'] == $field_key['value']) {
+					$trigger[$key]['is_show'] = 1;
+				} else {
+					$trigger[$key]['is_show'] = 0;
+				}
+				if ($trigger_detail['tpl']) {
+					$tpl = $trigger_detail['tpl'];
+				}
+			}
+			return $trigger;
+		}
+
 
 		private function _jquery_md5($field)
 		{
@@ -1502,7 +1618,7 @@
 			$field = md5(is_array($field) ? implode(',', $field) : $field);
 			//            }
 			//            dump($field);
-			return '#trigger_' . $field;
+			return 'trigger_' . md5($this->_namespace) . '_' . $field;
 		}
 
 		/**
@@ -1524,7 +1640,7 @@
 			foreach ($this->_keyList as $key => $e) {
 				$pk == $e['field'] && $flag = true;
 				$e['data'] = $this->_data;
-				$e['jquery_id'] = md5(is_array($e['field']) ? implode(',', $e['field']) : $e['field']);
+				$e['jquery_id'] = $this->_jquery_md5($e['field']);
 				if ($e['type'] instanceof \Closure) {
 					// 闭包
 					$e['value'] = $e['type']($this->_data, $e);
@@ -1532,7 +1648,7 @@
 						$e['field'] = $matches[1];
 						$e['type'] = $matches[2];
 					} else {
-						$e['type'] = 'label';
+						$e['type'] = 'closure';
 					}
 				} elseif (is_array($e['field'])) {
 					$i = 0;

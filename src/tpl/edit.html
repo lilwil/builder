@@ -1,5 +1,7 @@
 
 
+<script type="text/javascript" src="__STATIC__/common/clipboard.min.js"></script>
+{notempty name='menu_title' }
 <title>{$menu_title}</title>
 
 <div class="layui-card layadmin-header">
@@ -11,15 +13,15 @@
 		<a><cite>{$menu_title}</cite></a>
 	</div>
 </div>
-
+{/notempty}
 
 <div class="layui-fluid">
 	<div class="layui-row layui-col-space15">
 		<div class="layui-col-md12">
 			<div class="layui-card">
-				<div class="layui-card-header">{$menu_title}</div>
+				{notempty name='menu_title' }	<div class="layui-card-header">{$menu_title}</div>{/notempty}
 				<div class="layui-card-body" pad15>
-<form class="layui-form" action="">
+<form class="layui-form" action="" id="form-{$name_space}">
 					<div class="layui-form" wid100 lay-filter="">
 
 						{present name='keyList'}
@@ -85,12 +87,18 @@
 						<div class="layui-form-item">
 							<div class="layui-input-block">
 
-								{present name='form_submit'}
-									<button  type="button" class="layui-btn"  lay-submit="" lay-filter="{$filter}" >{$form_submit.title}</button>
-								{/present}
-								{present name='form_reset'}
-								<button type="reset" class="layui-btn layui-btn-primary">重置</button>
-								{/present}
+								{volist name='form_buttons' id='vo'}
+
+								<button  type="{$vo.type}"
+										 {eq name="vo.type" value="close"}
+										 onclick="closeTab(this)"
+								{/eq}
+										 class="layui-btn"
+										 {notempty name="vo.url"  } data-url="{$vo.url?:''}" {/notempty}
+										 {notempty name="vo.click"  } onclick="{$vo.click}" {/notempty}
+										 {eq name="vo.type" value="submit"} lay-submit="" lay-filter="{$filter}"{/eq}  >{$vo.title}</button>
+
+								{/volist}
 
 								{present name='form_close'}
 								<!--	<button  type="button" class="layui-btn layui-btn-primary" onclick="close">{$form_close.title}</button>
@@ -126,6 +134,18 @@
 
 		form.render();
 
+		window.closeTab = function (obj) {
+			var arr = obj.form.action.split('#');
+			element.tabDelete('layadmin-layout-tabs',arr[1]);
+			/*var clipboard = new ClipboardJS('.email', {
+				text: function () {
+					return $("#email_address").html();
+				}
+			});
+			clipboard.on('success', function (e) {
+				alert('复制成功')
+			});*/
+		}
 		//自定义验证
 		form.verify({
 			required: [/[\S]+/, '必填项不能为空'],
@@ -188,9 +208,10 @@
 		form.on('submit({$filter})', function(obj){
 			//	layer.msg(JSON.stringify(obj.field));
 			//	layer.msg(JSON.stringify(obj.field));
-
+			// console.log(this);
+			// console.log(obj);
 			$.ajax({
-				url:"{$savePostUrl}", //请求的url地址
+				url:$(this).data('url'), //请求的url地址
 				dataType:"json", //返回格式为json
 				async:true,//请求是否异步，默认为异步，这也是ajax重要特性
 				data:obj.field, //参数值
@@ -207,6 +228,9 @@
 								console.log(arr);
 								element.tabDelete('layadmin-layout-tabs',arr[1]);
 							},req.wait*1000);
+						}else if (req.reload)
+						{
+							layui.index.render();
 						}
 						layer.msg(req.message);
 
@@ -295,28 +319,100 @@
 
 			//绑定选择事件
 			{volist name='triggers' id='trigger'}
-				{php}$field = $key;{/php}
-				form.on('radio(filter_{$field})', function(obj){
+				form.on('{$trigger.field.type}(filter_{$name_space}_{$trigger.field.field})', function(data){
 					//layer.msg(JSON.stringify(obj.field));
-					var trigger_value = obj['value'];
-					{volist name='trigger' id='vo'}
-					if($.inArray(trigger_value,{$vo['value']|raw})>-1 )
-					{
-						$('{$vo.jquery_hide}').hide();
-						$('{$vo.jquery_show}').show();
-					}
-					{/volist}
+					console.log(data);
+					console.log(this);
+					{$trigger['tpl']}
+
+					{php}  if('checkbox' == $trigger['field']['type']) {{/php}
+						var trigger_value = new Array();
+						$("#form-{$name_space}").find('input[lay-filter=filter_{$name_space}_{$trigger.field.field}]:checked').each(function() {
+							trigger_value.push($(this).val());
+						});
+
+						var trigger_checked = data.elem.checked;
+						{volist name='trigger.data' id='vo'}
+
+						var trigger_field_{$vo.field} =
+
+						0{volist name='vo.value' id='vvo'} +($.inArray("{$vvo}",trigger_value) + 1){/volist};
+
+							console.log("{$vo.field}"+ trigger_field_{$vo.field} )
+							if (trigger_field_{$vo.field}>0)
+							{
+								$('{$vo.jquery}').show();
+							}else{
+									$('{$vo.jquery}').hide();
+							}
+						{/volist}
+
+						{php}  }{/php}
+
+								{php}  if('switch' == $trigger['field']['type']) {{/php}
+
+									if (this.checked) {
+										$("#builder_switch_{$trigger['field']['field']}").val(1);
+									} else {
+										$("#builder_switch_{$trigger['field']['field']}").val(0);
+									}
+
+									var trigger_value = this.checked?1:0;
+									{volist name='trigger.data' id='vo'}
+									if(trigger_value=="{$vo['value']}" )
+									{
+										$('{$vo.jquery_hide}').hide();///111
+										$('{$vo.jquery_show}').show();
+									}
+									{/volist}
+
+
+									{php}  }{/php}
+
+
+							{php}  if('radio' == $trigger['field']['type'] || 'select' == $trigger['field']['type']) {{/php}
+
+								var trigger_value = data['value'];
+								{volist name='trigger.data' id='vo'}
+								if(trigger_value=="{$vo['value']}" )
+								{
+									$('{$vo.jquery_hide}').hide();///111
+									$('{$vo.jquery_show}').show();
+								}
+								{/volist}
+
+
+						{php}  }{/php}
+
 					return false;
 				});
 			{/volist}
-				{volist name='triggers' id='trigger'}
-					{volist name='trigger' id='vo' }
-						{eq name='vo.is_show' value = '1'}
-						$('{$vo.jquery_hide}').hide();
-						{/eq}
-					{/volist}
-				{/volist}
 
+				/*** 隐藏选项2start**/
+				{volist name='triggers' id='trigger'}
+
+				{php}  if('checkbox' != $trigger['field']['type']) {{/php}
+//111111
+						{volist name='trigger.data' id='vo' }
+							{eq name='vo.is_show' value = '1'}
+							$('{$vo.jquery_hide}').hide();
+							{/eq}
+						{/volist}
+
+					{php}  }{/php}
+				{php}  if('checkbox' == $trigger['field']['type']) {{/php}
+
+				{volist name='trigger.data' id='vo' }
+				{eq name='vo.is_show' value = '0'}
+				$('{$vo.jquery}').hide();
+				{/eq}
+					{/volist}
+
+					{php}  }{/php}
+
+
+				{/volist}
+			/*** 隐藏选项2end**/
 
 		});
 </script>

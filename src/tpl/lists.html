@@ -1,0 +1,178 @@
+<title>{$menu_title}</title>
+<link rel="stylesheet" href="/static/admin/style/template.css?v=1.2.1 pro-1" media="all">
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">{$p_menu_title}</a>
+        {present name='menu_group_title' }
+        <a><cite>{$menu_group_title}</cite></a>
+        {/present}
+        <a><cite>{$menu_title}</cite></a>
+    </div>
+</div>
+
+<div class="layui-fluid">
+
+
+    <div class="layui-card">
+        <div class="layui-form layui-card-header layuiadmin-card-header-auto" lay-filter="app-forum-list">
+
+            <div class="layui-collapse ns-tips" style="display: none">
+                <div class="layui-colla-item">
+                    <h2 class="layui-colla-title">操作提示<i class="layui-icon layui-colla-icon"></i></h2>
+                    <ul class="layui-colla-content layui-show">
+                        <li>1、店铺到期30日内可以申请续签</li>
+                        <li>2、请认准官方收款账户，支付凭据上传之后请联系官方客服人员</li>
+                    </ul>
+                </div>
+            </div>
+
+            {notempty name='suggest'}
+            <blockquote class="layui-elem-quote">{$suggest}</blockquote>
+            {/notempty}
+            {notempty name='warning'}
+            <blockquote class="layui-elem-quote " style="border-left: 5px solid red;">{$warning}</blockquote>
+            {/notempty}
+            {present name='searches'}
+            <form class="layui-form-item">
+                <!-- 搜索部分start -->
+                {volist name="searches" id="search"}
+                {include file="$search_path"/}
+                {/volist}
+                {volist name='hidden' id='vo'}
+                <input type="hidden" name="{$vo.name}" value="{$vo.value}">
+                {/volist}
+                <div class="layui-inline">
+                    <button class="layui-btn" lay-submit lay-filter="{$namespace}-table-reload-btn">搜索</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </form>
+            <!-- 搜索部分end -->
+            {/present}
+
+        </div>
+        <div class="layui-card-body">
+
+            <div class="layui-row layui-col-space30">
+                <div class="layui-col-md2 layui-col-sm4">
+                    <div class="cmdlist-container">
+                        <a href="javascript:;">
+                            <img src="/static/admin/style/res/template/portrait.png">
+                        </a>
+                        <a href="javascript:;">
+                            <div class="cmdlist-text">
+                                <p class="info">2018春夏季新款港味短款白色T恤+网纱中长款chic半身裙套装两件套</p>
+                                <div class="price">
+                                    <b>￥79</b>
+                                    <p>  ¥  <del>130</del>
+                                    </p>
+                                    <span class="flow"><i class="layui-icon layui-icon-rate"></i>433</span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+
+                <div class="layui-col-md12 layui-col-sm12">
+                    <div id="demo0">
+                        <div class="layui-box layui-laypage layui-laypage-default" id="layui-laypage-19"><a
+                                href="javascript:;" class="layui-laypage-prev layui-disabled" data-page="0">上一页</a><span
+                                class="layui-laypage-curr"><em class="layui-laypage-em"></em><em>1</em></span><a
+                                href="javascript:;" data-page="2">2</a><a href="javascript:;" data-page="3">3</a><a
+                                href="javascript:;" data-page="4">4</a><a href="javascript:;" data-page="5">5</a><a
+                                href="javascript:;" class="layui-laypage-next" data-page="2">下一页</a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/html" id="{$namespace}-table-action">
+    {volist name='do_action' id='action'}
+
+    {php}  if ($action['status'] instanceof \Closure) {  {/php}
+    {{#  if(d.{$action['field']}){ }}
+    {php} }else{  {/php}
+    {{# var arr = {$action.status|json_encode};  if( true == arr.includes(d.status)){ }}
+    {php}  }  {/php}
+    {eq name='action.event' value='edit'}
+    <a class="layui-btn layui-btn-xs {$action.attr.class}"
+       lay-href="{$action.url}">
+        {present name='action.attr.icon'}
+        <i class="layui-icon layui-icon-{$action.attr.icon}"></i>
+        {/present}
+        {present name='action.attr.custom_icon'}
+        <i class="iconfont icon-{$action.attr.custom_icon}"></i>
+        {/present}
+        {$action.title}
+    </a>
+    {else/}
+    <a class="layui-btn layui-btn-xs {$action.attr.class}" lay-event="{$action.event}"
+       data-title="{$action.title}"
+       data-width="{$action.attr.width|default=''}"
+       data-height="{$action.attr.height|default=''}"
+       data-message="{$action.attr.message|default=''}"
+       data-url="{$action.url}">
+        {present name='action.attr.icon'}
+        <i class="layui-icon layui-icon-{$action.attr.icon}"></i>
+        {/present}
+        {present name='action.attr.custom_icon'}
+        <i class="iconfont icon-{$action.attr.custom_icon}"></i>
+        {/present}
+        {$action.title}
+    </a>
+    {/eq}
+    {{#  } }}
+    {/volist}
+</script>
+{volist name='templets' id='vo'}
+{$vo|raw}
+{/volist}
+
+<script>
+    Date.prototype.Format = function (fmt) { //author: meizz
+        var o = {
+            "M+": this.getMonth() + 1, //月份
+            "d+": this.getDate(), //日
+            "h+": this.getHours() % 12 == 0 ? 12 : this.getHours() % 12, //小时
+            "H+": this.getHours(), //小时
+            "m+": this.getMinutes(), //分
+            "s+": this.getSeconds(), //秒
+            "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+            "S": this.getMilliseconds() //毫秒
+        };
+        if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+        for (var k in o)
+            if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        return fmt;
+    }
+    layui.use(["laytpl", 'admin', 'forum', "element"], function () {
+        var $ = layui.$
+            , admin = layui.admin
+            , view = layui.view
+            , form = layui.form
+            , element = layui.element
+            ,laypage = layui.laypage
+            , r = layui.device();
+        form.render(null, 'app-forum-list');
+
+        laypage.render({
+            elem: 'demo0'
+            ,limit:15
+            , count: 500 //数据总数
+            ,jump: function(obj, first){
+                //obj包含了当前分页的所有参数，比如：
+                console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+                console.log(obj.limit); //得到每页显示的条数
+
+                //首次不执行
+                if(!first){
+                    //do something
+                }
+            }
+        });
+
+    });
+</script>

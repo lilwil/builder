@@ -1,5 +1,5 @@
 <style>
-    .layui-form-item {
+    .layui-form-item-botton {
         margin-bottom: 0px;
     }
 </style>
@@ -23,7 +23,7 @@
         <div class="layui-col-md12">
             <div class="layui-card">
                 <div class="layui-card-header">{$title} {if condition="$suggest"}（{$suggest|htmlspecialchars}）{/if}</div>
-                <div class="layui-card-body" pad15>
+                <div class="layui-card-body " pad15>
 
                     {present name='explaints' }
                     {volist name='explaints' id='vo'}
@@ -31,11 +31,11 @@
                     {/volist}
 
                     {/present}
-                    <div class="layui-form" lay-filter="">
+                    <div class="layui-form view" lay-filter="">
 
                         {volist name="keyList" id="field"}
 
-                        <div class="layui-form-item">
+                        <div class="layui-form-item layui-form-item-botton">
                             <label class="layui-form-label">{$field.title|htmlspecialchars}：</label>
                             <div class="layui-input-block" style="padding: 8px 10px;">
                                <span >{$field.value}</span>

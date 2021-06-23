@@ -6,7 +6,7 @@
 
 {else/}
 
-<div class="layui-form-item" id="trigger_{$field['jquery_id']}">
+<div class="layui-form-item" id="{$field['jquery_id']}">
 
   {notempty name='field.title'}  <label class="layui-form-label">{$field.title|htmlspecialchars}</label>{/notempty}
     {switch name="field.type"}
@@ -78,14 +78,24 @@
 
     {/case}
     {case value="label"}
-    <div class="layui-input-inline">
-        <span style="line-height: 38px;">{$field.value}</span>
+    <div class="layui-input-block">
+        <span style="line-height: 38px;    float: left;display: block;">{$field.value}</span>
 
-
+        {notempty name='field.tips'}
+        <div class="layui-form-mid layui-word-aux">（{$field.tips}）</div>
+        {/notempty}
     </div>
-    {notempty name='field.tips'}
-    <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
-    {/notempty}
+
+    {/case}
+    {case value="closure"}
+    <div class="layui-input-block">
+        {$field.value|raw}
+        {notempty name='field.tips'}
+        <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
+        {/notempty}
+    </div>
+
+
     {/case}
     {case value="password"}
     <div class="layui-input-inline">
@@ -94,14 +104,45 @@
     </div>
     {/case}
     {case value="readonly"}
-    <div class="layui-input-inline">
-        <input type="text" autocomplete="off" class="layui-input" value="{$field.value|htmlspecialchars}"
-               placeholder="无需填写" readonly>
-    </div>
+    <div class="layui-input-block">
+        <input type="text"  class="layui-input" value="{$field.value|htmlspecialchars}" placeholder="无需填写" readonly>
+
     {notempty name='field.tips'}
     <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
     {/notempty}
+    </div>
+    {/case}
+    {case value="copy"}
+    <div class="layui-input-block">
+        <input id="copy_{$name_space}_{$field.field}" type="text" onmouseenter="this.select()" data-clipboard-text="{$field.value|htmlspecialchars}"  class="layui-input" value="{$field.value|htmlspecialchars}"  readonly>
 
+    {notempty name='field.tips'}
+    <div class="layui-form-mid layui-word-aux">{$field.tips}</div>
+    {/notempty}
+    </div>
+
+    <script>
+        layui.use([], function(){
+            var $ = layui.$;
+            var layer = layui.layer;
+
+            var clipboard = new ClipboardJS('#copy_{$name_space}_{$field.field}');
+            clipboard.on('success', function(e) {
+
+                layer.msg('复制成功');
+                clipboard.destroy();  //解决多次弹窗
+                e.clearSelection();
+            });
+            clipboard.on('error', function(e) {
+                layer.msg('复制失败');
+                clipboard.destroy();  //解决多次弹窗
+                e.clearSelection();
+            });
+        });
+
+
+
+    </script>
     {/case}
 
     {case value="time_cycle"}
@@ -493,7 +534,7 @@
     {case value="select"}
     <div class="layui-input-inline">
         <!-- 单选菜单 -->
-        <select name="{$field.field}" id="key_{$field.field}" lay-verify="{$field['verify']|raw}" data-width="{$field['size']}" data-toggle="selectpicker" >
+        <select name="{$field.field}" id="key_{$field.field}" lay-filter="filter_{$name_space}_{$field.field}"  lay-verify="{$field['verify']|raw}" data-width="{$field['size']}" data-toggle="selectpicker" >
         {volist name="field.options" id="option"}
         {php} $selected = $field['value']==$key ? 'selected' : '';{/php}
         <option value="{$key}" {$selected}>{$option}</option>
@@ -705,7 +746,7 @@
         $checked = in_array($key,$field['value_array']) ? 'checked' : '';
         $inputId = 'id_'.$field['field'].'_$key';
         {/php}
-        <input type="checkbox" name="{$field.field}[]" lay-verify="{$field['verify']|raw}" value="{$key}" {$checked}
+        <input type="checkbox" name="{$field.field}[]" lay-filter="filter_{$name_space}_{$field.field}" lay-verify="{$field['verify']|raw}" value="{$key}" {$checked}
                title="{$option}">
         {/volist}
 
@@ -721,11 +762,11 @@
     {case value="switch"}
 
     <div class="layui-input-inline">
-        <input type="checkbox" lay-verify="{$field['verify']|raw}" lay-filter="builder_switch_{$field.field}" {php}
+        <input type="checkbox" lay-verify="{$field['verify']|raw}"  lay-filter="filter_{$name_space}_{$field.field}"  {php}
                if($field['value']){ echo 'checked=""';}{/php} value="{$field['value']}" lay-skin="switch"
         lay-text="{php}echo implode('|',$field['options']);{/php}">
 
-        <input type="hidden" name="{$field.field}" id="builder_switch_{$field.field}" value="{$field['value']}">
+         <input type="hidden"  name="{$field.field}"  id="builder_switch_{$field.field}" value="{$field['value']}">
 
     </div>
     {notempty name='field.tips'}
@@ -736,7 +777,7 @@
             var form = layui.form,
                 $ = layui.$;
             //监听指定开关
-            form.on('switch(builder_switch_{$field.field})', function (data) {
+            form.on('switch(filter_{$name_space}_{$field.field})', function (data) {
                 if (this.checked) {
                     $("#builder_switch_{$field.field}").val(1);
                 } else {
@@ -818,7 +859,8 @@
             elementPathEnabled: false,
             wordCount: false,
             enableAutoSave: true,
-            initialFrameHeight: 500,
+            initialFrameHeight: "{$field.style.height}",
+            initialFrameWidth: "{$field.style.width}",
             toolbars: {$field.config.items|raw|json_encode}
             //      serverUrl: "{$field.config.upload}"
         });
@@ -977,7 +1019,7 @@ $field['field_a'] = implode('|',$field['field']);
 $field['value_a'] = implode(' - ',$field['value']);
 {/php}
 <div class="layui-input-inline" style="width: 320px">
-    <input type="text" class="layui-input" size="{$field['size']}" id="j_builder_{$field.field_a|md5}"
+    <input type="text" class="layui-input" readonly size="{$field['size']}" id="j_builder_{$field.field_a|md5}"
            value="{$field.value_a}">
     <input type="hidden" name="{$field.field[0]}" id="j_builder_{$field.field[0]}" value="{$field.value[0]}">
     <input type="hidden" name="{$field.field[1]}" id="j_builder_{$field.field[1]}" value="{$field.value[1]}">
@@ -995,9 +1037,7 @@ $field['value_a'] = implode(' - ',$field['value']);
         var laydate = layui.laydate, $ = layui.$;
 
         //执行一个laydate实例
-        {php}
-        if (is_array($field['field'])) {
-            {/php}
+        {php}if (is_array($field['field'])) {{/php}
                 var options = {$field.options|json_encode|raw};
                 options['done'] = function (value, date) {
                     var arr = value.split(" - ")
@@ -1007,14 +1047,10 @@ $field['value_a'] = implode(' - ',$field['value']);
                 };
                 laydate.render(options);
 
-                {php}
-            }else{
-                {/php}
+                {php} }else{  {/php}
                     laydate.render({$field.options|json_encode|raw});
 
-                    {php}
-                }
-                {/php}
+                    {php} } {/php}
                 }
             );
 </script>
@@ -1067,7 +1103,7 @@ foreach ($field['options'] as $key => $option) {
 $checked = $field['value']==$key ? 'checked' : '';
 {/php}
 
-<input type="radio" name="{$field.field}" lay-filter="filter_{$field.field}" value="{$key}" {$checked}
+<input type="radio" name="{$field.field}" lay-filter="filter_{$name_space}_{$field.field}" value="{$key}" {$checked}
        title="{$option|htmlspecialchars}" {$field.disabled?'disabled=""':''}>
 
 {php}

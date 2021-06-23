@@ -93,6 +93,8 @@
 		 * @var string
 		 */
 		protected $_model;
+		protected $_cssl;
+		protected $_jsl;
 		protected $_with = [];
 		protected $_where;
 		protected $_order;
@@ -112,7 +114,7 @@
 			// 复选框
 			$this->_namespace = $this->request->module() . '_' . str_replace('.', '_', $this->request->controller())
 				. '_' . $this->request->action() . '_'
-				. md5(json_encode($this->request->except('v')));
+				. md5(json_encode($this->request->except('v,user')));
 			//                .implode('_',$this->request->except('v'));
 		}
 
@@ -127,6 +129,32 @@
 		{
 			$this->_model = $model;
 			$this->_pagination = $pagination;
+			return $this;
+		}
+
+		/**
+		 * 引入css
+		 * @param string $model
+		 * @return $this
+		 * @author  : 微尘 <yicmf@qq.com>
+		 * @datetime: 2019/3/28 13:35
+		 */
+		public function css($css)
+		{
+			$this->_css = $css;
+			return $this;
+		}
+
+		/**
+		 * 引入js
+		 * @param string $model
+		 * @return $this
+		 * @author  : 微尘 <yicmf@qq.com>
+		 * @datetime: 2019/3/28 13:35
+		 */
+		public function js($js)
+		{
+			$this->_js = $js;
 			return $this;
 		}
 
@@ -360,8 +388,8 @@
 		 */
 		public function setSearchPostUrl($url, $param = [])
 		{
-			$m = ['m' => $this->request->param('m')];
-			$param = empty($param) ? $m : array_merge($param, $m);
+			$get = $this->request->get();
+			$param = empty($param) ? $get : array_merge($param, $get);
 			$this->_searchPostUrl = Url::build($url, $param);
 			return $this;
 		}
@@ -393,7 +421,7 @@
 		 * @param array $attr
 		 * @return Table
 		 */
-		public function buttonNew($url = 'update', $title = '新增', $width = '', $height = '', $attr = [])
+		public function buttonUpdate($url = 'update', $title = '新增', $width = '', $height = '', $attr = [])
 		{
 			$default['url'] = $url;
 			$default['class'] = 'layui-bg-green';
@@ -675,18 +703,6 @@
 		}
 
 		/**
-		 * 搜索.
-		 * @param string $title 标题
-		 * @param string $field 键名
-		 * @param string $type 类型，默认文本
-		 * @param string $des 描述
-		 * @param        $attr  标签文本
-		 * @return $this @auth
-		 */
-		/*
-	 * public function search($title = '搜索', $field = 'key', $type = 'text', $des = '', $attr) { $this->_search[] = array( 'title' => $title, 'name' => $field, 'type' => $type, 'des' => $des, 'attr' => $attr ); return $this; }
-	 */
-		/**
 		 * 搜索text文本信息.
 		 * @param string $title
 		 * @param string $field
@@ -695,7 +711,7 @@
 		 * @param array $attr
 		 * @return $this
 		 */
-		public function searchText($field, $title, $des = '', $attr = [])
+		public function searchText($field, $title, $des = '', $default = '', $attr = [])
 		{
 			$this->_search[] = [
 				'title' => $title,
@@ -703,6 +719,7 @@
 				'type' => 'text',
 				'condition' => '=',
 				'des' => $des,
+				'value' => $default,
 				'attr' => $attr,
 			];
 			return $this;
@@ -717,50 +734,106 @@
 		 * @param array $attr
 		 * @return $this
 		 */
-		public function searchTextLike($field, $title, $desc = '支持模糊搜索', $attr = [])
+		public function searchTextLike($field, $title, $desc = '支持模糊搜索', $default = '', $attr = [])
 		{
 			$this->_search[] = [
 				'title' => $title,
 				'field' => $field,
 				'type' => 'text',
 				'condition' => 'like',
+				'value' => $default,
 				'des' => $desc,
 				'attr' => $attr,
 			];
 			return $this;
 		}
 
+
 		/**
-		 * 时间搜索.
-		 * @param string $field
-		 * @param string $title
-		 * @param array|string|null $value
-		 * @param array $attr
+		 * 日期选择器.
 		 * @return $this
 		 */
-		public function searchTime($field, $title, $value = null, $attr = [], $width = 300)
+		public function searchDate($field, $title, $placeholder = null, $default = null, $width = 300, $min = '', $max = '', $type = 'date', $range = false)
 		{
-			if (is_string($value)) {
-				if (!strpos($value, ' - ')) {
-					if (time_format($value) < time_format('now')) {
-						$value = time_format($value) . ' - ' . time_format('now');
-					} else {
+			$formats = [
+				'year' => 'yyyy',
+				'date' => 'yyyy-MM-dd',
+				'datetime' => 'yyyy-MM-dd HH:mm:ss',
+			];
+			$format = [
+				'date' => 'Y-m-d',
+				'datetime' => 'Y-m-d H:i:s',
+			];
 
-						$value = time_format('now') . ' - ' . time_format($value);
+			if (is_string($default)) {
+				if (!strpos($default, ' - ')) {
+					if (time_format($default) < time_format('now')) {
+						$default = time_format($default, $format[$type]) . ' - ' . time_format('now', $format[$type]);
+					} else {
+						$default = time_format('now', $format[$type]) . ' - ' . time_format($default, $format[$type]);
 					}
+				}
+			}
+			$options = [
+				'elem' => '#j_table_builder_' . (strpos($field, '|') ? md5($field) : $field),
+				'type' => $type,
+				'range' => $range,
+				'format ' => $formats[$type],
+				'mark ' => [],
+				'min' => $min,
+				'max' => $max,
+				'value' => $default,
+			];
+			foreach ($options as $key => $item) {
+				if (!$item) {
+					unset($options[$key]);
 				}
 			}
 			$this->_search[] = [
 				'title' => $title,
 				'field' => $field,
 				'type' => 'datepicker',
-				'condition' => 'between',
-				'attr' => $attr,
-				'value' => $value,
+				'value' => $default,
+				'placeholder' => $placeholder,
 				'width' => $width,
+				'options' => $options,
 			];
 			return $this;
+
 		}
+
+		/**
+		 * 日期时间选择器
+		 * @param $field
+		 * @param $title
+		 * @param null $placeholder
+		 * @param null $default
+		 * @param int $width
+		 * @param string $min
+		 * @param string $max
+		 * @return $this
+		 */
+		public function searchDateTimeRange($field, $title, $placeholder = null, $default = null, $width = 300, $min = '', $max = '')
+		{
+			return $this->searchDate($field, $title, $placeholder, $default, $width, $min, $max, 'datetime', true);
+		}
+
+		/**
+		 * 日期选择器
+		 * @param $field
+		 * @param $title
+		 * @param null $placeholder
+		 * @param null $default
+		 * @param int $width
+		 * @param string $min
+		 * @param string $max
+		 * @return $this
+		 */
+		public function searchDateRange($field, $title, $placeholder = null, $default = null, $width = 180, $min = '', $max = '')
+		{
+			return $this->searchDate($field, $title, $placeholder, $default, $width, $min, $max, 'date', true);
+		}
+
 
 		/**
 		 * 选择搜索
@@ -774,7 +847,7 @@
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/5/8 13:15
 		 */
-		public function searchBool($field, $title, $default = '', $des = '', $attr = [])
+		public function searchBool($field, $title, $des = '', $default = '', $attr = [])
 		{
 			$options = [
 				[
@@ -787,7 +860,7 @@
 				],
 			];
 
-			return $this->searchSelect($field, $title, $options, $default, $des, $attr);
+			return $this->searchSelect($field, $title, $options, $des, $default, $attr);
 		}
 
 		/**
@@ -802,7 +875,7 @@
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/5/8 13:15
 		 */
-		public function searchSelect($field, $title, $options = [], $default = '', $des = '', $attr = [])
+		public function searchSelect($field, $title, $options = [], $des = '', $default = '', $attr = [])
 		{
 			$this->_search[] = [
 				'title' => $title,
@@ -827,11 +900,12 @@
 		 * @param        $attr     标签文本
 		 * @return $this
 		 */
-		public function search($title = '搜索', $field = 'key', $type = 'text', $des = '', $attr = [], $options = null)
+		public function search($title = '搜索', $field = 'key', $type = 'text', $des = '', $default = '', $attr = [], $options = null)
 		{
 			$this->_search[] = [
 				'title' => $title,
 				'field' => $field,
+				'value' => $default,
 				'type' => $type,
 				'condition' => '=',
 				'des' => $des,
@@ -1026,13 +1100,25 @@ EOF;
 
 
 		/**
-		 * 显示纯文本
+		 * 隐藏显示
 		 * @param string|array $field 键名
 		 * @return Table
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/3/28 13:31
 		 */
 		public function keyHidden($field)
+		{
+			return $this->key($field, '', false, '', 'hidden', '', '');
+		}
+
+		/**
+		 * 追加字段
+		 * @param string|array $field 键名
+		 * @return Table
+		 * @author  : 微尘 <yicmf@qq.com>
+		 * @datetime: 2019/3/28 13:31
+		 */
+		public function append($field)
 		{
 			return $this->key($field, '', false, '', 'hidden', '', '');
 		}
@@ -1241,7 +1327,7 @@ EOF;
 		public function keyMap($field, $title, $map, $sort = false, $width = '', $style = '')
 		{
 			if (empty($width)) {
-				$max = 1;
+				$max = strlen($title);
 				foreach ($map as $v) {
 					if ($max < strlen($v)) {
 						$max = strlen($v);
@@ -1280,19 +1366,32 @@ EOF;
 			if (strpos($field, '|')) {
 				$temp = explode('|', $field);
 				$field = $temp[1];
-			} else {
+				$this->_with[$temp[0]] = ['id', 'url'];
+			} elseif (strpos($field, '_id')) {
 				$temp = explode('_', $field);
+				$this->_with[$temp[0]] = ['id', 'url'];
+			} else {
+				$temp = $field;
 			}
-			$this->_with[$temp[0]] = ['id', 'url'];
 			$templet_name = uniqid();
-			$with_field = $temp[0];
 			$common = config('template.tpl_replace_string.__COMMON__') . '/images/default_image.gif';
-			$this->_templets[] = <<<EOF
+			if (is_array($temp)) {
+				$with_field = $temp[0];
+				$this->_templets[] = <<<EOF
 <script type="text/html" id="$templet_name">
 <div class="layer-photos" id="layer-photos-{{d.id}}-$with_field-{{d.$with_field?d.$with_field.id:d.id}}"><img style="display: inline-block; width: 30px;cursor:pointer" title="点击查看大图"
- layer-src=" {{ d.{$temp[0]}?d.{$temp[0]}.url:'{$common}' }}" src=" {{ d.{$temp[0]}?d.{$temp[0]}.url:'{$common}' }}"></div>
+ layer-src="{{ d.{$temp[0]}?d.{$temp[0]}.url:'{$common}' }}" src="{{ d.{$temp[0]}?d.{$temp[0]}.url:'{$common}' }}"></div>
 </script>
 EOF;
+			} else {
+				$this->_templets[] = <<<EOF
+<script type="text/html" id="$templet_name">
+<div class="layer-photos" id="layer-photos-{{d.id}}-$field-{{d.id}}"><img style="display: inline-block; width: 30px;cursor:pointer" title="点击查看大图"
+ layer-src="{{ d.{$field}?d.{$field}:'{$common}' }}" src="{{ d.{$field}?d.{$field}:'{$common}' }}"></div>
+</script>
+EOF;
+			}
+
 			//            $this->_templets[] = <<<EOF
 			//<script type="text/html" id="$templet_name">
 			// <img style="display: inline-block; width: 25px; height: 25px;" src= {{ d.{$temp}?d.{$field}:'{$common}/images/default_image.gif' }}>
@@ -1387,7 +1486,7 @@ EOF;
 			$templet = uniqid();
 			$this->_templets[] = <<<EOF
  <script type="text/html" id="$templet">
-          <a  lay-event="dialog" data-url="$url" data-width="$dialog_width" data-height="$dialog_height" ><i class="layui-icon layui-icon-search"></i> {{d.$field}}</a>
+          <a style="cursor:pointer "  lay-event="dialog" data-url="$url" data-width="$dialog_width" data-height="$dialog_height" ><i class="layui-icon layui-icon-search"></i> {{d.$field}}</a>
         </script>
 EOF;
 			return $this->key($field, $title, false, $width, 'normal', '', '#' . $templet);
@@ -1496,7 +1595,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status);
 		}
 
-		public function keyDoActionEdit($url = 'update?id={$id}', $title = '编辑', $status = [], $attrs = [])
+		public function keyDoActionUpdate($url = 'update?id={$id}', $title = '编辑', $status = [], $attrs = [])
 		{
 			$attr['class'] = 'layui-bg-green';
 			$attr['toggle'] = $this->toggle;
@@ -1603,7 +1702,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status);
 		}
 
-		public function keyDoActionDel($url = 'delete?id={$id}', $title = '删除', $status = [], $attr = [])
+		public function keyDoActionDelete($url = 'delete?id={$id}', $title = '删除', $status = [], $attr = [])
 		{
 			$attr['class'] = 'layui-btn-danger';
 			$attr['toggle'] = 'doajax';
@@ -1770,7 +1869,7 @@ EOF;
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/4/12 17:54
 		 */
-		public function fetch($vars = [], $config = [])
+		public function fetch($name = 'table', $vars = [], $config = [])
 		{
 			if ($this->request->isPost()) {
 				try {
@@ -1863,59 +1962,59 @@ EOF;
 				return json($result);
 			} else {
 				if ($this->request->has('page', 'get')) {
-					try {
-						$this->_field = array_unique($this->_field);
-						$list_rows = $this->request->has('limit', 'param') ? $this->request->param('limit') : Config::get('paginate.list_rows');
-						$page = $this->request->has('page', 'param') ? $this->request->param('page') : 1;
-						$result = [];
-						$searchWhere = $this->_searchWhere();
-						$searchOrder = $this->_searchOrder();
-						$model = $this->_model;
-						if ($model instanceof \Closure) {
-							// 闭包
-							$result = $model($searchWhere, $this->_field, $searchOrder, $page, $list_rows);
-						} elseif (empty($this->_data)) {
-							$whereModel = $model::where($searchWhere)
-								->where($this->_where);
-							$result['code'] = 0;
-							if (count($this->_count)) {
-								$lists = $whereModel->withCount($this->_count)
-									->order($searchOrder)
-									->limit($list_rows * ($page - 1), $list_rows)->select();
-							} else {
-								$lists = $whereModel
-									->order($searchOrder)
-									->limit($list_rows * ($page - 1), $list_rows)->select();
-							}
-							$result['count'] = $whereModel->count();
-						} else {
-							if ($this->_data instanceof \Closure) {
-								$data = $this->_data;
-								// 闭包
-								$lists = $data($searchWhere, $this->_field, $searchOrder, $page, $list_rows);
-							} else {
-								$lists = $this->_data;
-							}
-							if (isset($lists['code'])) {
-								$result = $lists;
-								$lists = $lists['data'];
-							} else {
-								$result['code'] = 0;
-								$result['count'] = count($this->_data);
-							}
-						}
-						// 数据转换
-						if (!empty($lists)) {
-							// 采用分页类||单纯的数据数组
-							foreach ($lists as $key => $list) {
-								$lists[$key] = $this->convertKey($list);
-							}
-						}
-						$result['data'] = $lists;
-					} catch (Exception $e) {
+//					try {
+					$this->_field = array_unique($this->_field);
+					$list_rows = $this->request->has('limit', 'param') ? $this->request->param('limit') : Config::get('paginate.list_rows');
+					$page = $this->request->has('page', 'param') ? $this->request->param('page') : 1;
+					$result = [];
+					$searchWhere = $this->_searchWhere();
+					$searchOrder = $this->_searchOrder();
+					$model = $this->_model;
+					if ($model instanceof \Closure) {
+						// 闭包
+						$result = $model($searchWhere, $this->_field, $searchOrder, $page, $list_rows);
+					} elseif (empty($this->_data)) {
+						$whereModel = $model::where($searchWhere)
+							->where($this->_where);
 						$result['code'] = 0;
-						$result['message'] = $e->getMessage();
+						if (count($this->_count)) {
+							$lists = $whereModel->withCount($this->_count)
+								->order($searchOrder)
+								->limit($list_rows * ($page - 1), $list_rows)->select();
+						} else {
+							$lists = $whereModel
+								->order($searchOrder)
+								->limit($list_rows * ($page - 1), $list_rows)->select();
+						}
+						$result['count'] = $whereModel->count();
+					} else {
+						if ($this->_data instanceof \Closure) {
+							$data = $this->_data;
+							// 闭包
+							$lists = $data($searchWhere, $this->_field, $searchOrder, $page, $list_rows);
+						} else {
+							$lists = $this->_data;
+						}
+						if (isset($lists['code'])) {
+							$result = $lists;
+							$lists = $lists['data'];
+						} else {
+							$result['code'] = 0;
+							$result['count'] = count($this->_data);
+						}
 					}
+					// 数据转换
+					if (!empty($lists)) {
+						// 采用分页类||单纯的数据数组
+						foreach ($lists as $key => $list) {
+							$lists[$key] = $this->convertKey($list);
+						}
+					}
+					$result['data'] = $lists;
+//					} catch (Exception $e) {
+//						$result['code'] = 0;
+//						$result['message'] = $e->getMessage();
+//					}
 					return json($result);
 				} else {
 					foreach ($this->_keyList as $index => $item) {
@@ -2030,7 +2129,7 @@ EOF;
 					/* 加入隐藏表单 */
 					$this->assign('hidden', $this->_hidden);
 					$this->assign('page', $this->_pagination ? 1 : 0);
-					return parent::_fetch('table', $vars, $config);
+					return parent::_fetch($name, $vars, $config);
 				}
 			}
 		}
@@ -2073,6 +2172,22 @@ EOF;
 							}
 						}
 					}
+				}
+			}
+			$urlFields = $this->request->except('v,page,limit,user,m,field,store');
+			if (is_array($urlFields)) {
+				foreach ($urlFields as $field => $field_value) {
+					$out = false;
+					foreach ($this->_search as $search) {
+						if ($search['field'] == $field) {
+							$out = true;
+							continue;
+						}
+					}
+					if ($out) {
+						continue;
+					}
+					$where[] = [$field, '=', $field_value];
 				}
 			}
 			//
