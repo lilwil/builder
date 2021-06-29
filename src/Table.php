@@ -73,6 +73,7 @@
 		// 默认配置值
 		// 默认获取主键的字段
 		protected $_default_pk = 'id';
+		protected $_auto_refresh = 0;
 		// 默认获取状态的字段
 		protected $_default_status = 'status';
 		private $_toolbar = ['filter', 'print'];// ['filter', 'exports', 'print'];
@@ -266,6 +267,19 @@
 		public function setDefaultPk($pk)
 		{
 			$this->_default_pk = $pk;
+			return $this;
+		}
+
+		/**
+		 * 配置默认主键.
+		 * @param $pk
+		 * @return $this
+		 * @author  : 微尘 <yicmf@qq.com>
+		 * @datetime: 2019/3/28 13:35
+		 */
+		public function setAutoRefresh($time=5000)
+		{
+			$this->_auto_refresh = $time;
 			return $this;
 		}
 
@@ -2129,6 +2143,7 @@ EOF;
 					/* 加入隐藏表单 */
 					$this->assign('hidden', $this->_hidden);
 					$this->assign('page', $this->_pagination ? 1 : 0);
+					$this->assign('auto_refresh', $this->_auto_refresh);
 					return parent::_fetch($name, $vars, $config);
 				}
 			}
@@ -2150,7 +2165,7 @@ EOF;
 		{
 			$fields = $this->request->param('field/a');
 			$model = $this->_model;
-			if (is_object($model)) {
+			if (empty($this->_data)) {
 				$db_fields = $model::getTableFields();
 			} else {
 				$db_fields = $this->_field;
@@ -2174,7 +2189,7 @@ EOF;
 					}
 				}
 			}
-			$urlFields = $this->request->except('v,page,limit,user,m,field,store');
+			$urlFields = $this->request->except('v,page,limit,user,m,field,video');
 			if (is_array($urlFields)) {
 				foreach ($urlFields as $field => $field_value) {
 					$out = false;

@@ -245,6 +245,19 @@
            // layer.msg('服务端排序。order by '+ obj.field + ' ' + obj.type);
         });
 
+        {neq name='auto_refresh' value='0'}
+        setInterval(function (){
+
+        //    if($(""))
+            if($("#{$namespace}-table").length){
+
+                table.reload('{$namespace}-table',{page: {
+                        curr: 1 //重新从第 1 页开始
+                    }});
+            }
+        }, {$auto_refresh})
+
+        {/neq}
         function eventAjax(url,data,obj)
         {
             $.ajax({
