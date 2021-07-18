@@ -2189,7 +2189,7 @@ EOF;
 					}
 				}
 			}
-			$urlFields = $this->request->except('v,page,limit,user,m,field,video');
+			$urlFields = $this->request->except('v,page,limit,user,m,field,video,store');
 			if (is_array($urlFields)) {
 				foreach ($urlFields as $field => $field_value) {
 					$out = false;
