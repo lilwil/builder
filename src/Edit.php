@@ -850,7 +850,7 @@
 					$config['items'] = $items[$config['items']];
 				}
 			} else {
-				$config['items'] = $items['simple'];
+				$config['items'] = $items['all'];
 			}
 			$key = [
 				'id_name' => uniqid(),

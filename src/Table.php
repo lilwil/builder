@@ -194,13 +194,13 @@
 			'color' => '000000',
 			'bgColor' => 'FFFFFF',
 			'cellType' => 'String'
-		], $font = [
+		],                    $font = [
 			'family' => 'Calibri',
 			'size' => 12,
 			'color' => '000000',
 			'bgColor' => 'FFFFFF',
 			'cellType' => 'String'
-		], $border = [
+		],                    $border = [
 			'top' => '{ style: \'thin\', color: \'FF5722\' }',
 			'bottom' => '{ style: \'thin\', color: \'FF5722\' }',
 			'left' => '{ style: \'thin\', color: \'FF5722\' }',
@@ -253,7 +253,7 @@
 		 */
 		public function field($field)
 		{
-			$this->_field = $field;
+			$this->_field = array_merge($this->_field, is_array($field) ? $field : [$field]);
 			return $this;
 		}
 
@@ -277,7 +277,7 @@
 		 * @author  : 微尘 <yicmf@qq.com>
 		 * @datetime: 2019/3/28 13:35
 		 */
-		public function setAutoRefresh($time=5000)
+		public function setAutoRefresh($time = 5000)
 		{
 			$this->_auto_refresh = $time;
 			return $this;
@@ -986,17 +986,17 @@
 EOF;
 				$templet = '#' . $templet;
 			}
+
 			if (preg_match('/(.*)\[(.*)\]/', $title, $matches)) {
 				$title = $matches[2];
-				//                $tips = $matches[2];
-				//                dump($matches);
 				$hide = true;
 			} else {
 				$hide = false;
-				//                $tips = '';
 			}
 			if (!($templet instanceof \Closure) && false === strpos($field, '.')) {
 				$this->_field = array_merge($this->_field, is_array($field) ? $field : explode(',', $field));
+			} elseif (false !== strpos($field, '{$data')) {
+				$this->_field[] = substr(explode('|', $field)[0], 7);;
 			}
 			if (!$sort) {
 				$sort = false;
@@ -1430,7 +1430,7 @@ EOF;
 			$common = config('template.tpl_replace_string.__COMMON__') . '/images/avatar_default.png';
 			$this->_templets[] = <<<EOF
 <script type="text/html" id="$templet_name">
- <img style="display: inline-block; width: 25px; height: 25px;border-radius: 50%;" src= {{ d.{$with_field}?d.{$with_field}.avatar.url:'{$common}' }}>  {{ d.{$with_field}?d.{$with_field}.nickname:'无用户' }}
+ <img style="display: inline-block; width: 25px; height: 25px;border-radius: 50%;" src= {{ d.{$with_field}?d.{$with_field}.avatar:'{$common}' }}>  {{ d.{$with_field}?d.{$with_field}.nickname:'无用户' }}
 </script>
 EOF;
 			return $this->key($field, $title, $sort, 150, 'normal', $style, '#' . $templet_name);
@@ -1667,7 +1667,7 @@ EOF;
 			return $this->keyDoAction($url, $title, $attr, $status);
 		}
 
-		public function keyDoActionView($url = 'view?id={$id}', $title = '查看详情', $status = [], $attrs = [])
+		public function keyDoActionView($url = 'view?id={$id}', $title = '详情', $status = [], $attrs = [])
 		{
 			$attr['class'] = 'layui-bg-green';
 			$attr['toggle'] = 'dialog';
@@ -1923,7 +1923,7 @@ EOF;
 							$result = [];
 						}
 					} else {
-						$this->_field = array_unique($this->_field);
+						$this->_field = $this->_getField($this->_field);
 						$list_rows = 1000000;
 						$page = 1;
 						$result = [];
@@ -1977,7 +1977,7 @@ EOF;
 			} else {
 				if ($this->request->has('page', 'get')) {
 //					try {
-					$this->_field = array_unique($this->_field);
+					$this->_field = $this->_getField($this->_field);
 					$list_rows = $this->request->has('limit', 'param') ? $this->request->param('limit') : Config::get('paginate.list_rows');
 					$page = $this->request->has('page', 'param') ? $this->request->param('page') : 1;
 					$result = [];
@@ -1987,8 +1987,9 @@ EOF;
 					if ($model instanceof \Closure) {
 						// 闭包
 						$result = $model($searchWhere, $this->_field, $searchOrder, $page, $list_rows);
-					} elseif (empty($this->_data)) {
+					} elseif (!is_null($model)) {
 						$whereModel = $model::where($searchWhere)
+							->field(implode($this->_field, ','))
 							->where($this->_where);
 						$result['code'] = 0;
 						if (count($this->_count)) {
@@ -2017,6 +2018,8 @@ EOF;
 							$result['count'] = count($this->_data);
 						}
 					}
+//					dump($lists);
+//					exit();
 					// 数据转换
 					if (!empty($lists)) {
 						// 采用分页类||单纯的数据数组
@@ -2150,6 +2153,22 @@ EOF;
 		}
 
 
+		protected function _getField($field)
+		{
+			$field = array_unique($field);
+			$model = $this->_model;
+			if (!is_null($model)) {
+				$db_fields = $model::getTableFields();
+				foreach ($field as $index => $item) {
+					if (!strpos($item, ' ') && !in_array($item, $db_fields)) {
+						unset($field[$index]);
+					}
+				}
+				$field = array_values($field);
+			}
+			return $field;
+		}
+
 		protected function _searchOrder()
 		{
 			if ($this->request->has('order_field')) {
@@ -2165,7 +2184,7 @@ EOF;
 		{
 			$fields = $this->request->param('field/a');
 			$model = $this->_model;
-			if (empty($this->_data)) {
+			if (!is_null($model)) {
 				$db_fields = $model::getTableFields();
 			} else {
 				$db_fields = $this->_field;
