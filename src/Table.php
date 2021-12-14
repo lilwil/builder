@@ -1992,6 +1992,7 @@ EOF;
 							->field(implode($this->_field, ','))
 							->where($this->_where);
 						$result['code'] = 0;
+						$result['count'] = $whereModel->count();
 						if (count($this->_count)) {
 							$lists = $whereModel->withCount($this->_count)
 								->order($searchOrder)
@@ -2001,7 +2002,6 @@ EOF;
 								->order($searchOrder)
 								->limit($list_rows * ($page - 1), $list_rows)->select();
 						}
-						$result['count'] = $whereModel->count();
 					} else {
 						if ($this->_data instanceof \Closure) {
 							$data = $this->_data;
