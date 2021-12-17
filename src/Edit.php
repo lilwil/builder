@@ -973,26 +973,6 @@
 		}
 
 		/**
-		 * 上传单个图片.
-		 * @param string $field 需要保存的字段，为URL地址，且必须是以_url结尾的字符串
-		 * @param string $title
-		 * @param null $remark
-		 * @param null $verify
-		 * @return $this
-		 * @author  : 微尘 <yicmf@qq.com>
-		 * @datetime: 2019/5/8 11:57
-		 */
-		public function keyPicture($field, $title, $remark = null, $verify = null, $default = 1)
-		{
-			$max_size = 0;
-			$exts = '';
-			$mimes = '';
-			return $this->key($field, $title, null, 'image',
-				['remark' => $remark, 'limit' => 1, 'max_size' => $max_size, 'mimes' => $mimes, 'exts' => $exts]
-				, $default, $verify);
-		}
-
-		/**
 		 * 单图片上传
 		 * @param string $field 需要保存的字段，为URL地址，且必须是以_url结尾的字符串
 		 * @param string $title
@@ -1056,19 +1036,7 @@
 				['limit' => $limit, 'max_size' => $max_size, 'mimes' => $mimes, 'exts' => $exts]
 				, $default, $verify);
 		}
-
-		/**
-		 * 实名认证
-		 * @param string $field
-		 * @param string $title
-		 * @param string|null $tips
-		 * @return $this
-		 */
-		public function keyImageGroup($field, $title = '', $tips = null, $options = [])
-		{
-			return $this->key($field, $title, $tips, 'image_group', $options);
-		}
-
+ 
 		/**
 		 * 实名认证
 		 * @param string $field

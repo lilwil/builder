@@ -1196,44 +1196,72 @@ $checked = $field['value']==$key ? 'checked' : '';
     {php}
     if(is_string($field['value']))
     {
-        $images = \app\file\model\Image::where('id','in',$field['value'])->select();
+      $images = \app\file\model\Image::where('id','in',$field['value'])->select();
     }else{
         $images = $field['value'];
     }
-
-    $values = [];
-
-    foreach ($images as $item) {
-    $values[]=$item['id'];
-    }
-    $values = implode(',',$values);
-
     {/php}
-    <style>
-        .layui-upload-img {
-            width: 92px;
-            height: 92px;
-            margin: 0 10px 10px 0;
-        }
-    </style>
+
+
+    <script src="/static/common/sortable.min.js"></script>
+
+
     <button type="button" class="layui-btn" id="button-upload-MultipleImage-{$field.field}">上传图片</button>
     <div class="layui-upload-list">
-        <input type="hidden" name="{$field.field}" id="file_value_{$field.field}" value="{$values}"/>
+        <input type="hidden" name="{$field.field}" id="file_value_{$field.field}" value="$field['value']"/>
         <img class="layui-upload-img" style="display: none" id="test-upload-normal-img" src="/static/common/images/default_image_240.gif">
             <div class="layui-upload-list" id="upload-MultipleImage-list-{$field.field}">
-                {volist name='images' id='vo'}
 
-                    <img class="layui-upload-img"  data-id="{$vo.id}" src="{$vo['url']}">
+                {volist name='images' id='vo'}
+<div class="thumbnail"  data-id="{$vo.id}">
+    <i class="icon iconfont icon-tuodong remove-picture"></i>
+    <i class="layui-icon layui-icon-close-fill remove-picture" onclick="removeUploadImg(this,'{$field.field}')"></i>
+    <img class="layui-upload-img"  src="{$vo['url']}" >
+</div>
 
                 {/volist}
             </div>
 
     </div>
+
     <script>
         layui.use(['admin', 'upload'], function () {
             var $ = layui.jquery
-                , upload = layui.upload;
+                , upload = layui.upload
+        ,element = layui.element;
             var limit = "{$field.options.limit}";
+            //获取对象
+            var el = document.getElementById('upload-MultipleImage-list-{$field.field}');
+            //设置配置
+            var ops = {
+                animation: 1000,
+                //拖动结束
+                onEnd: function (evt) {
+                    console.log(evt);
+                    console.log( evt.item);
+                    //获取拖动后的排序
+                    var arr = sortable.toArray();
+                    // console.log(arr);
+                    getUploadValue('{$field.field}');
+                },
+            };
+            window.removeUploadImg = function (obj,field) {
+                // console.log(obj);
+                $(obj).parent().remove();
+                getUploadValue(field);
+            }
+            window.getUploadValue = function (field) {
+                // console.log(field)
+                var temp = new Array();
+               var items = $('#upload-MultipleImage-list-'+field).children().each(function(index){
+                   $(this).data('id') &&temp.push($(this).data('id'))
+               });
+               $("#file_value_"+field).val(temp.join(','));
+                console.log(field)
+                console.log(temp.join(','))
+            }
+            //初始化
+            var sortable = Sortable.create(el, ops);
             //普通图片上传
             var uploadInst = upload.render({
                 elem: '#button-upload-MultipleImage-{$field.field}'
@@ -1248,32 +1276,51 @@ $checked = $field['value']==$key ? 'checked' : '';
                     //预读本地文件示例，不支持ie8
                     obj.preview(function (index, file, result) {
                       //  console.log(result);
-                        $('#upload-MultipleImage-list-{$field.field}').append('<img  data-index="index-'+index+'" src="' + result + '" alt="' + file.name + '" class="layui-upload-img">')
+                        var html = '<div class="thumbnail"   data-index="index-'+index+'" > \n' +
+                            '    <i class="icon iconfont icon-tuodong remove-picture"></i>\n' +
+                            '    <i class="layui-icon layui-icon-close-fill remove-picture" onclick="removeUploadImg(this,\'{$field.field}\')"></i>\n' +
+                            '    <img class="layui-upload-img"  src="' + result + '" " alt="' + file.name + '">\n' +
+                            '\n' +
+                            '                <div class="layui-progress layui-progress-big" id="progress-{$field.field}-'+index+'" lay-showpercent="yes" lay-filter="progress-{$field.field}-'+index+'">\n' +
+                            '                   <div class="layui-progress-bar" lay-percent="0%" style="width: 0%;"><span class="layui-progress-text"></span></div>\n' +
+                            '                </div>' +
+                            '<div class="upload-msg" id="upload-msg-{$field.field}-'+index+'"></div>' +
+                            '</div>';
+                        $('#upload-MultipleImage-list-{$field.field}').append(html)
+
+                        //单个重传
+                        // tr.find('.demo-reload').on('click', function(){
+                        //     obj.upload(index, file);
+                        // });
+
                     });
                 }
-                ,progress: function(n, elem,e){
-
-                   // console.log(elem);
-                  //  console.log(e);
-                    var percent = n + '%' //获取进度百分比
-                   // element.progress('demo', percent); //可配合 layui 进度条元素使用
-                  //  console.log(percent);
-                    //以下系 layui 2.5.6 新增
-                 //   console.log(elem); //得到当前触发的元素 DOM 对象。可通过该元素定义的属性值匹配到对应的进度条。
+                ,progress: function(n, elem, res, index){
+                    // console.log(elem); //得到当前触发的元素 DOM 对象。可通过该元素定义的属性值匹配到对应的进度条。
+                    // console.log(res); //得到 progress 响应信息
+                    $('#progress-{$field.field}-'+index).removeClass('layui-hide');
+                    element.progress('progress-{$field.field}-'+index, n + '%'); //进度条
+                    // if(n == 100){
+                    //     layer.msg('上传完毕', {icon: 1});
+                    // }
                 }
                 , done: function (res, index, upload) {
                     //如果上传失败
-
-
-                  //  console.log(index)
-                    console.log($("[data-index=\'index-"+index+"\']"));
+                    // console.log($("[data-index=\'index-"+index+"\']"));
                    // console.log(upload)
                   //  alert(limit>0)
-                    if(limit>0 && $("#upload-MultipleImage-list-{$field.field}").children("img").length>limit)
+                    if(limit>0 && $("#upload-MultipleImage-list-{$field.field}").children().length>limit)
                     {
-                        $("#upload-MultipleImage-list-{$field.field}").children("img").eq(0).remove();
+                        $("#upload-MultipleImage-list-{$field.field}").children().eq(0).remove();
                     }
                     if (res.code > 0) {
+                        //演示失败状态，并实现重传
+                        $('#progress-{$field.field}-'+index).addClass('layui-hide');
+                        var demoText = $('#upload-msg-{$field.field}-'+index);
+                        demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
+                        demoText.find('.demo-reload').on('click', function(){
+                            uploadInst.upload();
+                        });
                         return layer.msg(res.message);
                     } else {
                         //上传成功
@@ -1282,27 +1329,38 @@ $checked = $field['value']==$key ? 'checked' : '';
                 }
                 ,allDone: function(obj){ //当文件全部被提交后，才触发
                    // console.log(obj); //得到总文件数file_value_{$field.field}
-
-                    var arr = new Array();
-                    console.log(obj)
-                    console.log( $("#upload-MultipleImage-list-{$field.field}").children("img"))
-                    $("#upload-MultipleImage-list-{$field.field}").children("img").each(function(){
-                       if ($(this).data('id'))
-                       {
-                           arr.push($(this).data('id'));
-                       }
+                   //  var arr = new Array();
+                    // $("#upload-MultipleImage-list-{$field.field}").children("img").each(function(){
+                    //    if ($(this).data('id'))
+                    //    {
+                    //        arr.push($(this).data('id'));
+                    //    }
+                    // });
+                    // $("#file_value_{$field.field}").val(arr.join(','));
+                    getUploadValue('{$field.field}');
+                }
+                , error: function(index, upload){ //错误回调
+                    // var that = this;
+                    // var tr = that.elemList.find('tr#upload-'+ index)
+                    //     ,tds = tr.children();
+                    // tds.eq(3).find('.demo-reload').removeClass('layui-hide'); //显示重传
+                    $('#progress-{$field.field}-'+index).addClass('layui-hide');
+                    //演示失败状态，并实现重传
+                    var demoText = $('#upload-msg-{$field.field}-'+index);
+                    demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-xs demo-reload">重试</a>');
+                    demoText.find('.demo-reload').on('click', function(){
+                        uploadInst.upload();
                     });
 
-                    $("#file_value_{$field.field}").val(arr.join(','));
                 }
-                , error: function () {
+                //function () {
                     //演示失败状态，并实现重传
                 /*    var demoText = $('#test-upload-demoText');
                     demoText.html('<span style="color: #FF5722;">上传失败</span> <a class="layui-btn layui-btn-mini demo-reload">重试</a>');
                     demoText.find('.demo-reload').on('click', function () {
                         uploadInst.upload();
                     });*/
-                }
+               // }
             });
         });
     </script>
@@ -1319,20 +1377,11 @@ $checked = $field['value']==$key ? 'checked' : '';
         $images = $field['value'];
     }
 
-    $values = [];
-
-    foreach ($images as $item) {
-    $values[]=$item['id'];
-    }
-    $values = implode(',',$values);
-
     {/php}
     <div class="layui-upload-list">
             <div class="layui-upload-list" id="upload-MultipleImage-list-{$field.field}">
                 {volist name='images' id='vo'}
-
-                    <img class="layui-upload-img"  data-id="{$vo.id}" src="{$vo['url']}">
-
+                    <img class="layui-upload-img"  src="{$vo['url']}">
                 {/volist}
             </div>
 
@@ -1395,7 +1444,7 @@ $checked = $field['value']==$key ? 'checked' : '';
                 elem: '.button-upload-auth-image-front'
                 , accept: 'images' //普通文件
                 , exts: 'png|jpg|jpeg'
-                , size: 1024 * 2 //限制文件大小，单位 KB
+                , size: 1024 * 5 //限制文件大小，单位 KB
                 , url: "{:\\think\\facade\\Url::build('file/Image/upload',['module'=>$request->module()])}"
                 , data: {
                     type: 'idcard',
@@ -1459,8 +1508,6 @@ $checked = $field['value']==$key ? 'checked' : '';
                     } else {
                         //上传成功
                         $("#back_id").val(res.data.id);
-
-
                     }
                 }
                 , error: function () {
@@ -1521,14 +1568,15 @@ $checked = $field['value']==$key ? 'checked' : '';
 
         });
     </script>
+</div>
 
-
-</div>{/case}
+{/case}
 
 {case value="image"}
 
 {php}
 
+$default_image_url='/static/common/images/default_image_240.gif';
 $images = [];
     if(is_numeric($field['value']) && $field['value']>0){
         $Image = \app\file\model\Image::find($field['value']);
@@ -1537,7 +1585,7 @@ $images = [];
         $field['url'] = $Image['url'];
         }else{
         $field['value'] = '';
-        $field['url'] = '/static/common/images/default_image_240.gif';
+        $field['url'] = $default_image_url;
         }
     }elseif(is_object($field['value'])){
         $picture = $field['value'];
@@ -1550,35 +1598,43 @@ $images = [];
         $field['url'] = $field['value'];
         }else{
         $field['value'] = '';
-        $field['url'] = '/static/common/images/default_image_240.gif';
+        $field['url'] = $default_image_url;
         }
 
     }
 {/php}
 
 <div class="layui-input-inline">
-    <style>
-        .layui-upload-img {
-            width: 92px;
-            height: 92px;
-            margin: 0 10px 10px 0;
-        }
-    </style>
     <button type="button" class="layui-btn" id="button-upload-normal-image-{$field.field}">上传图片</button>
     <div class="layui-upload-list">
-        <img class="layui-upload-img" id="upload-normal-image-{$field.field}" src="{$field['url']}">
-        <input type="hidden" name="{$field.field}" value="{$field['value']}"/>
-        <p id="test-upload-demoText"></p>
+        <input type="hidden" name="{$field.field}" id="upload-normal-image-val-{$field.field}" value="{$field['value']}"/>
+
+        <div class="thumbnail" >
+            <i class="layui-icon layui-icon-close-fill remove-picture" onclick="removeUploadImage(this,'{$field.field}')"></i>
+            <img class="layui-upload-img" id="upload-normal-image-{$field.field}" src="{$field['url']}" >
+            <p id="test-upload-demoText"></p>
+        </div>
+
+
     </div>
     <script>
         layui.use(['admin', 'upload'], function () {
             var $ = layui.jquery
                 , upload = layui.upload;
 
+            window.removeUploadImage = function (obj,field) {
+                // console.log(obj);
+               // $(obj).parent().remove();
+              //  getUploadValue(field);
+                $("#upload-normal-image-"+field).attr('src','{$default_image_url}')
+                $("#upload-normal-image-val-"+field).val('')
+            }
             //普通图片上传
             var uploadInst = upload.render({
                 elem: '#button-upload-normal-image-{$field.field}'
-                ,multiple: {$field['options']['limit'] == 1?0:1}
+                ,multiple: 1
+                ,accept: 'images' //图片
+                ,acceptMime: 'image/*'
                 //  ,accept: 'file' //普通文件
                 //  ,exts: 'zip|rar|7z' //只允许上传压缩文件
                 //   ,size: 60 //限制文件大小，单位 KB
@@ -1608,40 +1664,8 @@ $images = [];
                 }
             });
 
-            //多图片上传
-            upload.render({
-                elem: '#test-upload-more'
-                , url: '{:\\think\\facade\\Url::build(\'file/Image/upload\')}'
-                , multiple: true
-                , before: function (obj) {
-                    //预读本地文件示例，不支持ie8
-                    obj.preview(function (index, file, result) {
-                        $('#test-upload-more-list').append('<img src="' + result + '" alt="' + file.field + '" class="layui-upload-img">')
-                    });
-                }
-                , done: function (res) {
-                    //上传完毕
-                }
-            });
-
-
         });
     </script>
-
-    <!-- <div class="col-md-5">
-        <div class="thumbnail">
-            <input type="hidden" id='singel_image_{$field.field}' name="{$field.field}" value="">
-            <img id='singel_image_{$field.field}_img' data-src="holder.js/300x300"alt="..."
-                 src="{$single_image|default=\\think\\facade\\Config::get('default.image_240')}">
-            <div class="caption">
-                <p>
-                    <a href="{:\\think\\facade\\Url::build('admin/Image/upload',['file_limit'=>1,'callback'=>'singel_image_'.$field['field']])}"
-                        class="btn btn-primary" role="button"data-toggle="dialog" data-mask = 'true' data-width = '1200' data-height = '800'
-                        data-id="singel_image_{$field.field}_dialog">{$field['value']? '替换图片': '上传图片'}</a>
-                </p>
-            </div>
-        </div>
-    </div> -->
 
 
 </div>{/case}

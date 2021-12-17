@@ -1989,7 +1989,7 @@ EOF;
 						$result = $model($searchWhere, $this->_field, $searchOrder, $page, $list_rows);
 					} elseif (!is_null($model)) {
 						$whereModel = $model::where($searchWhere)
-							->field(implode($this->_field, ','))
+//							->field(implode($this->_field, ','))
 							->where($this->_where);
 						$result['code'] = 0;
 						$result['count'] = $whereModel->count();
